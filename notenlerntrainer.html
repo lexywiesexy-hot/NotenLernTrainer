@@ -2065,6 +2065,12 @@
       return reactions[safeIndex];
     }
 
+    function getBestSpeedReaction() {
+      if (state.bestSpeedTier <= 0 && state.bestSpeedLoop <= 0) return getLadderReaction(0);
+      if (state.bestSpeedTier < getTopSpeedTier().level) return getLadderReaction(Math.max(0, state.bestSpeedTier - 1));
+      return getLadderReaction((SPEED_TIERS.length - 1) + state.bestSpeedLoop);
+    }
+
     function setText(id, text) {
       const el = document.getElementById(id);
       if (el) el.textContent = text;
@@ -2206,6 +2212,10 @@
       speedStreak: 0,
       speedTier: 0,
       speedLoop: 0,
+      speedDisplayStreak: 0,
+      speedDisplayTier: 0,
+      speedDisplayLoop: 0,
+      speedDecayTimer: null,
       bestSpeedTier: 0,
       bestSpeedLoop: 0,
       fastBonusXp: 0,
@@ -2908,18 +2918,18 @@
 
     function updateStats() {
       const isCompactViewport = window.innerWidth <= 760;
-      const speedStatus = getCurrentSpeedStatus();
+      const speedStatus = getSpeedStatusForDisplay();
       const speedTier = speedStatus.tier;
       levelCount.textContent = state.level;
       xpCount.textContent = `${state.xp}/${xpNeeded()}`;
       streakCount.textContent = state.streak;
       bestStreakCount.textContent = state.bestStreak;
-      speedCount.textContent = String(state.speedStreak);
+      speedCount.textContent = String(speedStatus.streak);
       speedTierLabel.textContent = speedStatus.label;
       fastBonusCount.textContent = String(state.fastBonusXp);
       mobileLevelCount.textContent = String(state.level);
       mobileXpCount.textContent = `${state.xp}/${xpNeeded()}`;
-      mobileSpeedSummary.textContent = `${state.speedStreak} ${speedStatus.label}`;
+      mobileSpeedSummary.textContent = `${speedStatus.streak} ${speedStatus.label}`;
       modePill.textContent = getModeLabel();
       renderLives();
       speedPill.classList.toggle('active', state.speedActive);
@@ -4002,12 +4012,66 @@
       return { tier, loop, chainXp, label };
     }
 
+    function getSpeedStatusForDisplay() {
+      const streak = state.speedDisplayStreak;
+      const tier = SPEED_TIERS.find(item => item.level === state.speedDisplayTier) || SPEED_TIERS[0];
+      const topTier = getTopSpeedTier();
+      const loop = state.speedDisplayLoop;
+      const chainXp = tier.level < topTier.level ? tier.fastChainXp : tier.fastChainXp + loop;
+      const label = tier.level === 0
+        ? tier.name
+        : tier.level < topTier.level
+          ? `${tier.name} +${chainXp}`
+          : loop > 0
+            ? `${tier.name} x${loop + 1} +${chainXp}`
+            : `${tier.name} +${chainXp}`;
+      return { streak, tier, loop, chainXp, label };
+    }
+
+    function syncSpeedDisplay() {
+      state.speedDisplayStreak = state.speedStreak;
+      state.speedDisplayTier = state.speedTier;
+      state.speedDisplayLoop = state.speedLoop;
+    }
+
+    function startSpeedDecay() {
+      if (state.speedDecayTimer) {
+        clearInterval(state.speedDecayTimer);
+        state.speedDecayTimer = null;
+      }
+      if (state.speedDisplayStreak <= 0) {
+        syncSpeedDisplay();
+        updateStats();
+        return;
+      }
+      state.speedDecayTimer = window.setInterval(() => {
+        if (state.speedDisplayStreak <= 0) {
+          clearInterval(state.speedDecayTimer);
+          state.speedDecayTimer = null;
+          syncSpeedDisplay();
+          updateStats();
+          return;
+        }
+        state.speedDisplayStreak = Math.max(0, state.speedDisplayStreak - 1);
+        state.speedDisplayTier = getSpeedTierForStreak(state.speedDisplayStreak).level;
+        state.speedDisplayLoop = getSpeedLoopForStreak(state.speedDisplayStreak);
+        updateStats();
+        if (state.speedDisplayStreak <= 0) {
+          clearInterval(state.speedDecayTimer);
+          state.speedDecayTimer = null;
+        }
+      }, 120);
+    }
+
     function clearSpeedState(options = {}) {
+      const hadVisibleSpeed = state.speedDisplayStreak > 0;
       state.speedStreak = 0;
       state.speedTier = 0;
       state.speedLoop = 0;
       state.speedActive = false;
       clearTimeout(state.speedTimer);
+      if (hadVisibleSpeed && !options.instantDisplayReset) startSpeedDecay();
+      else syncSpeedDisplay();
       if (!options.silent) {
         drawCurrentState();
         updateStats();
@@ -4074,6 +4138,7 @@
       state.speedTier = nextTier.level;
       state.speedLoop = nextLoop;
       state.speedActive = state.speedTier > 0;
+      syncSpeedDisplay();
       state.bestSpeedTier = Math.max(state.bestSpeedTier, state.speedTier);
       state.bestSpeedLoop = Math.max(state.bestSpeedLoop, state.speedLoop);
       const paceBoost = solveTime <= 0.78
@@ -4349,14 +4414,14 @@
       state.lastRunStreak = state.bestStreak;
       stopRoundTimer();
       clearPendingRoundAdvance();
-      const bestSpeedLabel = state.bestSpeedTier < getTopSpeedTier().level
-        ? SPEED_TIERS[state.bestSpeedTier].name
-        : state.bestSpeedLoop > 0
-          ? `${getTopSpeedTier().name} x${state.bestSpeedLoop + 1}`
-          : getTopSpeedTier().name;
+      const bestSpeedLabel = getBestSpeedReaction();
       clearSpeedState({ silent: true });
       drawCurrentState();
-      gameOverStats.textContent = `Level ${state.lastRunLevel} · Beste Serie ${state.lastRunStreak} · Speed ${bestSpeedLabel} · Fast XP ${state.fastBonusXp}`;
+      if (window.innerWidth <= 760) {
+        gameOverStats.innerHTML = `Level ${state.lastRunLevel} · Beste Serie ${state.lastRunStreak}<br>Speedscore: ${bestSpeedLabel} · Fast XP ${state.fastBonusXp}`;
+      } else {
+        gameOverStats.textContent = `Level ${state.lastRunLevel} · Beste Serie ${state.lastRunStreak} · Speedscore: ${bestSpeedLabel} · Fast XP ${state.fastBonusXp}`;
+      }
       gameOverOverlay.classList.add('show');
     }
 
@@ -4383,7 +4448,7 @@
       state.boss.level = 0;
       state.boss.sequence = [];
       state.boss.index = 0;
-      clearSpeedState({ silent: true });
+      clearSpeedState({ silent: true, instantDisplayReset: true });
       applyTheme();
     }
 
