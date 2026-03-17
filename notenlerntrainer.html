@@ -4499,6 +4499,12 @@
       document.body.style.overflow = '';
     }
 
+    function closeMenuDelayed(delayMs = 220) {
+      window.setTimeout(() => {
+        closeMenu();
+      }, delayMs);
+    }
+
     function setButtonsFromState() {
       modeButtons.forEach(button => button.classList.toggle('active', button.dataset.mode === state.mode));
       difficultyButtons.forEach(button => button.classList.toggle('active', button.dataset.difficulty === state.difficulty));
@@ -4783,7 +4789,7 @@
       setButtonsFromState();
       saveProgress();
       nextRound(true);
-      if (window.innerWidth <= 760) closeMenu();
+      if (window.innerWidth <= 760) closeMenuDelayed(260);
     }));
 
     difficultyButtons.forEach(button => button.addEventListener('click', () => {
