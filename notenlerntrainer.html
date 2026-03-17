@@ -2726,9 +2726,19 @@
       } catch (_) {}
     }
 
-    function playTone(freq, duration, type, volume) {
+    function playTone(freq, duration, type, volume, allowResumeRetry = true) {
       const ctx = ensureAudioContext();
-      if (!ctx || ctx.state !== 'running') return;
+      if (!ctx) return;
+      if (ctx.state !== 'running') {
+        if (allowResumeRetry) {
+          ctx.resume()
+            .then(() => {
+              if (ctx.state === 'running') playTone(freq, duration, type, volume, false);
+            })
+            .catch(() => {});
+        }
+        return;
+      }
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
