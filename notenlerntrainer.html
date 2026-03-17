@@ -2803,6 +2803,11 @@
     }
 
     function playTone(freq, duration, type, volume, allowResumeRetry = true) {
+      if (isIOS) {
+        playToneFallback(freq, duration, type, volume);
+        return;
+      }
+
       const ctx = ensureAudioContext();
       if (!ctx) {
         if (isIOS || isEmbeddedWebView) playToneFallback(freq, duration, type, volume);
