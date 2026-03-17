@@ -801,6 +801,11 @@
       color: var(--bad);
     }
 
+    .feedback.subtle {
+      color: rgba(239, 246, 255, 0.78);
+      font-weight: 700;
+    }
+
     .answer-tray {
       display: grid;
       gap: 10px;
@@ -1119,8 +1124,8 @@
       }
 
       .staff-wrap {
-        height: clamp(390px, 54vh, 500px);
-        min-height: clamp(390px, 54vh, 500px);
+        height: clamp(300px, 40vh, 420px);
+        min-height: clamp(300px, 40vh, 420px);
         padding: 0;
       }
 
@@ -1228,8 +1233,8 @@
       }
 
       .staff-wrap {
-        height: clamp(360px, 52vh, 460px);
-        min-height: clamp(360px, 52vh, 460px);
+        height: clamp(280px, 36vh, 380px);
+        min-height: clamp(280px, 36vh, 380px);
       }
 
       .answer-grid {
@@ -1610,6 +1615,8 @@
     const browserUa = navigator.userAgent || '';
     const isTelegramBrowser = /Telegram|TGWebApp/i.test(browserUa);
     const isEmbeddedWebView = /(Telegram|TGWebApp|wv|FBAN|FBAV|Instagram)/i.test(browserUa);
+    const isIOS = /iPad|iPhone|iPod/i.test(browserUa)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     const state = {
       mode: 'treble',
@@ -1641,6 +1648,7 @@
       roundLocked: false,
       audioPriorityDelayMs: 0,
       extraLedgerLines: 2,
+      audioUnlocked: false,
       lives: 5,
       maxLives: 5,
       gameOver: false,
@@ -2092,6 +2100,11 @@
     }
 
     function showToast(title, subtitle = '', variant = 'good') {
+      if (window.innerWidth <= 760) {
+        const subtleMessage = subtitle || title;
+        setFeedback(subtleMessage, 'subtle');
+        return;
+      }
       clearTimeout(state.comboTimer);
       comboTitle.textContent = title;
       comboSubtitle.textContent = subtitle;
@@ -2179,6 +2192,12 @@
     }
 
     function updateBossBanner() {
+      if (window.innerWidth <= 760) {
+        bossBanner.textContent = '';
+        bossBanner.classList.remove('show');
+        bossPill.hidden = true;
+        return;
+      }
       if (!state.boss.active) {
         bossBanner.textContent = '';
         bossBanner.classList.remove('show');
@@ -2286,18 +2305,18 @@
         const scale = Math.min(1, fitHeight / (totalSteps * base.lineGap));
         const lineGap = Math.max(38, Math.round(base.lineGap * scale));
         const noteScale = 0.58 + scale * 0.42;
+        const glyphScale = lineGap / 32;
         const noteRx = Math.max(20, Math.round(base.noteRx * noteScale));
         const noteRy = Math.max(13, Math.round(base.noteRy * noteScale));
         const stemLen = Math.max(82, Math.round(base.stemLen * noteScale));
-        const clefScale = 0.76 + scale * 0.24;
-        const trebleClefFontSize = Math.max(150, Math.round(248 * clefScale));
-        const bassClefFontSize = Math.max(110, Math.round(184 * clefScale));
-        const clefWidthTreble = Math.max(96, Math.round(192 * clefScale));
-        const clefWidthBass = Math.max(78, Math.round(156 * clefScale));
-        const clefHeightTreble = Math.max(168, Math.round(336 * clefScale));
-        const clefHeightBass = Math.max(124, Math.round(248 * clefScale));
-        const clefYOffsetTreble = Math.round(-12 * clefScale);
-        const clefYOffsetBass = Math.round(-8 * clefScale);
+        const trebleClefFontSize = Math.round(150 * glyphScale);
+        const bassClefFontSize = Math.round(110 * glyphScale);
+        const clefWidthTreble = Math.round(96 * glyphScale);
+        const clefWidthBass = Math.round(78 * glyphScale);
+        const clefHeightTreble = Math.round(168 * glyphScale);
+        const clefHeightBass = Math.round(124 * glyphScale);
+        const clefYOffsetTreble = Math.round(-3 * glyphScale);
+        const clefYOffsetBass = Math.round(-2 * glyphScale);
         const totalHeight = totalSteps * lineGap;
         const topExtraY = Math.round((500 - totalHeight) / 2);
         const topY = topExtraY + (extraLines * lineGap);
@@ -2379,6 +2398,10 @@
       const clefHeight = note.clef === 'treble'
         ? layout.clefHeightTreble
         : layout.clefHeightBass;
+      const clefFontFamily = isIOS
+        ? '"Times New Roman", "Georgia", serif'
+        : 'Georgia, Times New Roman, serif';
+      const clefStrokeWidth = isIOS ? '0.4' : '0.65';
       updateStaffViewBox(note, layout);
       const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
       const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
@@ -2432,7 +2455,7 @@
         'font-size': note.clef === 'treble'
           ? layout.trebleClefFontSize
           : layout.bassClefFontSize,
-        'font-family': 'Georgia, Times New Roman, serif',
+        'font-family': clefFontFamily,
         'dominant-baseline': 'middle'
       });
       clefShadow.textContent = note.clef === 'treble' ? TREBLE_CLEF : BASS_CLEF;
@@ -2446,10 +2469,10 @@
         'font-size': note.clef === 'treble'
           ? layout.trebleClefFontSize
           : layout.bassClefFontSize,
-        'font-family': 'Georgia, Times New Roman, serif',
+        'font-family': clefFontFamily,
         'dominant-baseline': 'middle',
         stroke: 'rgba(255,255,255,0.08)',
-        'stroke-width': '0.65',
+        'stroke-width': clefStrokeWidth,
         'paint-order': 'stroke fill'
       });
       clef.textContent = note.clef === 'treble' ? TREBLE_CLEF : BASS_CLEF;
@@ -2672,6 +2695,26 @@
       if (!state.audioCtx) state.audioCtx = new Ctx();
       if (state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
       return state.audioCtx;
+    }
+
+    function unlockAudio() {
+      const ctx = ensureAudioContext();
+      if (!ctx || state.audioUnlocked) return;
+
+      try {
+        const gain = ctx.createGain();
+        gain.gain.value = 0.00001;
+        gain.connect(ctx.destination);
+
+        const osc = ctx.createOscillator();
+        osc.frequency.value = 440;
+        osc.connect(gain);
+
+        const now = ctx.currentTime;
+        osc.start(now);
+        osc.stop(now + 0.01);
+        state.audioUnlocked = true;
+      } catch (_) {}
     }
 
     function playTone(freq, duration, type, volume) {
@@ -3324,6 +3367,7 @@
 
     function submitGuess(guess) {
       if (!state.current || state.gameOver || state.roundLocked) return;
+      unlockAudio();
       clearPendingRoundAdvance();
       const solveTime = getElapsedSecondsCapped();
       const targetNote = state.current;
@@ -3521,6 +3565,7 @@
 
     noteAudioToggle.addEventListener('change', () => {
       state.noteAudioMode = noteAudioToggle.checked;
+      unlockAudio();
       ensureAudioContext();
       updateStats();
       saveProgress();
@@ -3534,6 +3579,7 @@
     });
 
     toneBtn.addEventListener('click', () => {
+      unlockAudio();
       ensureAudioContext();
       if (state.current) playTargetPitch(state.current);
     });
@@ -3544,10 +3590,14 @@
     nextBtn.addEventListener('click', skipCurrentRound);
 
     window.addEventListener('keydown', event => {
+      unlockAudio();
       ensureAudioContext();
       const key = event.key.toUpperCase();
       if (NOTE_ORDER.includes(key)) submitGuess(key);
     });
+
+    window.addEventListener('pointerdown', unlockAudio, { passive: true });
+    window.addEventListener('touchstart', unlockAudio, { passive: true });
 
     gameOverOverlay.addEventListener('click', restartGame);
     gameOverOverlay.addEventListener('keydown', event => {
