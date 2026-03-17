@@ -1751,6 +1751,7 @@
     const DEFAULT_MASTERY = 0;
     const DEFAULT_AUDIO_GAIN = 0.5;
     const THEME_IDS = ['aurora', 'sunset', 'mint', 'brass', 'neon', 'violet', 'ember', 'lagoon', 'rose', 'glacier', 'copper', 'orchid', 'midnight', 'citrus', 'storm'];
+    const LEVEL_THEME_SEQUENCE = ['aurora', 'sunset', 'mint', 'brass', 'violet', 'ember', 'lagoon', 'rose', 'glacier', 'neon', 'copper', 'orchid', 'midnight', 'citrus', 'storm'];
     const NOTE_POOL_CACHE = new Map();
     const CLEF_VECTORS = {
       treble: {
@@ -2611,8 +2612,8 @@
     // Golden-ratio drift keeps each level feeling fresh without falling into an obvious short loop.
     function getLevelThemeId(level = state.level) {
       const normalizedLevel = Math.max(1, Math.floor(level || 1));
-      const themeIndex = Math.floor((normalizedLevel - 1) / 2) % THEME_IDS.length;
-      return THEME_IDS[themeIndex] || 'aurora';
+      const sequenceTheme = LEVEL_THEME_SEQUENCE[(normalizedLevel - 1) % LEVEL_THEME_SEQUENCE.length];
+      return sequenceTheme || 'aurora';
     }
 
     function getProceduralTheme(themeId, level = state.level) {
