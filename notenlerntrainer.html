@@ -1,0 +1,3255 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notenlerntrainer</title>
+  <style>
+    :root {
+      --bg1: #07131f;
+      --bg2: #10263d;
+      --bg3: #11395e;
+      --panel: rgba(255, 255, 255, 0.08);
+      --panel-strong: rgba(12, 22, 36, 0.78);
+      --border: rgba(255, 255, 255, 0.14);
+      --text: #eff6ff;
+      --muted: #93a6c4;
+      --accent: #71c4ff;
+      --accent-2: #ffd682;
+      --good: #8ff1bc;
+      --bad: #ffb6bf;
+      --accent-rgb: 113, 196, 255;
+      --accent-2-rgb: 255, 214, 130;
+      --good-rgb: 143, 241, 188;
+      --bad-rgb: 255, 182, 191;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      --safe-top: 0px;
+      --safe-bottom: 0px;
+      --app-height: 100vh;
+      --app-height-82: 82vh;
+      --app-height-88: 88vh;
+    }
+
+    @supports (padding: env(safe-area-inset-top)) {
+      :root {
+        --safe-top: env(safe-area-inset-top);
+        --safe-bottom: env(safe-area-inset-bottom);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Aptos", "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 14% 14%, rgba(var(--accent-rgb), 0.28), transparent 28%),
+        radial-gradient(circle at 84% 12%, rgba(var(--accent-2-rgb), 0.20), transparent 24%),
+        radial-gradient(circle at 52% 88%, rgba(var(--accent-rgb), 0.14), transparent 36%),
+        linear-gradient(156deg, var(--bg1), var(--bg2) 46%, var(--bg3));
+      display: grid;
+      place-items: center;
+      padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      touch-action: manipulation;
+    }
+
+    .app {
+      width: min(1080px, 100%);
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar,
+    .card,
+    .settings-drawer {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar {
+      position: sticky;
+      top: calc(12px + var(--safe-top));
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.30), rgba(var(--accent-2-rgb), 0.26));
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      flex: 0 0 auto;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin-top: 2px;
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .ghost-btn,
+    .burger-btn,
+    .menu-close,
+    .note-btn,
+    .segmented button,
+    .theme-btn {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 0.08s ease, background 0.16s ease, opacity 0.16s ease, filter 0.16s ease, border-color 0.16s ease;
+    }
+
+    .ghost-btn,
+    .burger-btn,
+    .menu-close {
+      min-height: 46px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      font-weight: 800;
+    }
+
+    .ghost-btn:hover,
+    .burger-btn:hover,
+    .menu-close:hover,
+    .note-btn:hover,
+    .segmented button:hover,
+    .theme-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .ghost-btn:active,
+    .burger-btn:active,
+    .menu-close:active,
+    .note-btn:active,
+    .segmented button:active,
+    .theme-btn:active {
+      transform: scale(0.98);
+    }
+
+    .ghost-btn[disabled],
+    .theme-btn[disabled] {
+      cursor: default;
+      opacity: 0.45;
+      filter: none;
+      transform: none;
+    }
+
+    .burger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      min-width: 46px;
+      padding-inline: 12px;
+      justify-content: center;
+    }
+
+    .burger-icon {
+      width: 18px;
+      height: 12px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .burger-icon::before,
+    .burger-icon::after,
+    .burger-icon span {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .burger-icon::before {
+      top: 0;
+    }
+
+    .burger-icon span {
+      top: 5px;
+    }
+
+    .burger-icon::after {
+      bottom: 0;
+    }
+
+    .settings-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+      background: rgba(3, 8, 18, 0.58);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    .settings-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-drawer {
+      position: fixed;
+      inset: 0 0 0 auto;
+      z-index: 50;
+      width: min(390px, 94vw);
+      height: var(--app-height);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 14px;
+      padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
+      border-radius: 0;
+      background: rgba(8, 14, 26, 0.96);
+      transform: translateX(100%);
+      transition: transform 0.22s ease;
+    }
+
+    .settings-drawer.show {
+      transform: translateX(0);
+    }
+
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .menu-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .menu-body {
+      overflow: auto;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      padding-right: 2px;
+    }
+
+    .menu-section,
+    .mission-card,
+    .mastery-panel {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .menu-label,
+    .panel-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .segmented {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .segmented button {
+      min-width: 0;
+      flex: 1 1 0;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      font-weight: 800;
+    }
+
+    .segmented button.active {
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.28), rgba(255, 255, 255, 0.09));
+      border-color: rgba(var(--accent-rgb), 0.38);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 46px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+    }
+
+    .toggle-row input {
+      accent-color: var(--accent);
+      width: 18px;
+      height: 18px;
+    }
+
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .theme-btn {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      text-align: left;
+    }
+
+    .theme-btn.active {
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.28), rgba(255, 255, 255, 0.06));
+      border-color: rgba(var(--accent-rgb), 0.50);
+    }
+
+    .theme-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 800;
+    }
+
+    .theme-swatch {
+      display: flex;
+      gap: 6px;
+    }
+
+    .theme-swatch span {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .theme-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .card {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 26px;
+    }
+
+    .stats {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stats-primary,
+    .stats-secondary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .lives-display,
+    .pill {
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lives-display {
+      padding-inline: 12px;
+    }
+
+    .life-note {
+      font-size: 20px;
+      line-height: 1;
+      color: var(--accent);
+      filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.32));
+      transition: transform 0.14s ease, opacity 0.14s ease, filter 0.14s ease;
+      user-select: none;
+    }
+
+    .life-note.lost {
+      opacity: 0.18;
+      transform: scale(0.88);
+      filter: none;
+    }
+
+    .pill {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .pill strong {
+      color: var(--text);
+    }
+
+    .pill.level-pill,
+    .pill.mode-pill,
+    .pill.boss-pill {
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.16), rgba(255, 255, 255, 0.05));
+    }
+
+    .pill.boss-pill {
+      border-color: rgba(var(--accent-2-rgb), 0.42);
+      color: #fff2cc;
+    }
+
+    .pill.speed-pill.active {
+      color: #fff;
+      box-shadow: 0 0 28px rgba(var(--accent-rgb), 0.26);
+    }
+
+    .pill.speed-pill span {
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0.82;
+    }
+
+    .pill.speed-pill.speed-tier-1 {
+      border-color: rgba(var(--accent-rgb), 0.30);
+    }
+
+    .pill.speed-pill.speed-tier-2 {
+      border-color: rgba(var(--accent-rgb), 0.44);
+      box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.16);
+    }
+
+    .pill.speed-pill.speed-tier-3 {
+      border-color: rgba(var(--accent-2-rgb), 0.44);
+      box-shadow: 0 0 22px rgba(var(--accent-2-rgb), 0.18);
+    }
+
+    .pill.speed-pill.speed-tier-4 {
+      border-color: rgba(var(--accent-2-rgb), 0.62);
+      box-shadow: 0 0 26px rgba(var(--accent-2-rgb), 0.26);
+    }
+
+    .insight-row {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.86fr) minmax(360px, 1.14fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .mission-title {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .mission-desc,
+    .mastery-summary,
+    .mission-reward {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .mission-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-rail {
+      flex: 1 1 auto;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.22s ease;
+    }
+
+    .mission-count {
+      flex: 0 0 auto;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .mastery-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mastery-chip {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+
+    .mastery-chip.current {
+      border-color: rgba(var(--accent-rgb), 0.46);
+      background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.18), rgba(255, 255, 255, 0.04));
+    }
+
+    .mastery-chip.weak {
+      border-color: rgba(var(--accent-2-rgb), 0.46);
+    }
+
+    .mastery-chip.revenge {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(var(--accent-2-rgb), 0.18);
+    }
+
+    .mastery-note {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .mastery-value {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .mastery-bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mastery-bar-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.22s ease;
+    }
+
+    .staff-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 470px;
+      padding: 10px 12px 8px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    #staffSvg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    #fxSvg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 2;
+    }
+
+    .staff-hud {
+      position: absolute;
+      inset: 12px 12px auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .boss-banner {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(8, 14, 24, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff1ce;
+      font-size: 13px;
+      font-weight: 800;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .boss-banner.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .combo-pop {
+      margin-left: auto;
+      max-width: min(290px, 78vw);
+      padding: 11px 14px;
+      border-radius: 18px;
+      background: rgba(7, 13, 24, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      text-align: right;
+      opacity: 0;
+      transform: translateY(-10px) scale(0.96);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .combo-pop.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .combo-pop.good {
+      box-shadow: 0 14px 30px rgba(var(--good-rgb), 0.18);
+    }
+
+    .combo-pop.bad {
+      box-shadow: 0 14px 30px rgba(var(--bad-rgb), 0.18);
+    }
+
+    .combo-pop.boss,
+    .combo-pop.perfect {
+      box-shadow: 0 14px 34px rgba(var(--accent-2-rgb), 0.18);
+    }
+
+    .combo-title {
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .combo-subtitle {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .feedback {
+      min-height: 28px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .feedback.good {
+      color: var(--good);
+    }
+
+    .feedback.bad {
+      color: var(--bad);
+    }
+
+    .answer-tray {
+      display: grid;
+      gap: 10px;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .note-btn {
+      min-height: 72px;
+      padding: 14px 10px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.28), rgba(255, 255, 255, 0.05));
+      font-size: clamp(18px, 2.3vw, 27px);
+      font-weight: 900;
+      box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.04);
+    }
+
+    .note-btn.flash-good {
+      animation: noteFlashGood 0.3s ease;
+    }
+
+    .note-btn.flash-bad {
+      animation: noteFlashBad 0.3s ease;
+    }
+
+    .speed-glow {
+      animation: speedPulse 0.7s infinite alternate;
+      filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.76));
+    }
+
+    @keyframes speedPulse {
+      from {
+        filter: drop-shadow(0 0 7px rgba(var(--accent-rgb), 0.48));
+      }
+
+      to {
+        filter: drop-shadow(0 0 17px rgba(var(--accent-rgb), 0.86));
+      }
+    }
+
+    @keyframes noteFlashGood {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.03);
+        border-color: rgba(var(--good-rgb), 0.50);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes noteFlashBad {
+      0% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-4px);
+      }
+
+      75% {
+        transform: translateX(4px);
+      }
+
+      100% {
+        transform: translateX(0);
+      }
+    }
+
+    .game-over-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(3, 8, 18, 0.7);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+      z-index: 4;
+    }
+
+    .game-over-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .game-over-panel {
+      min-width: min(430px, 92%);
+      padding: 28px 24px;
+      border-radius: 24px;
+      text-align: center;
+      background: rgba(10, 17, 30, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.36);
+      cursor: pointer;
+    }
+
+    .game-over-title {
+      font-size: 36px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .game-over-sub {
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .game-over-hint {
+      font-size: 13px;
+      color: #d6e6ff;
+    }
+
+    @media (max-width: 900px) {
+      .insight-row {
+        grid-template-columns: 1fr;
+      }
+
+      .mastery-grid {
+        grid-template-columns: repeat(7, minmax(74px, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        place-items: start center;
+        padding: calc(8px + var(--safe-top)) 8px calc(8px + var(--safe-bottom));
+      }
+
+      .app {
+        gap: 8px;
+      }
+
+      .topbar,
+      .card {
+        border-radius: 18px;
+      }
+
+      .topbar {
+        padding: 10px 12px;
+      }
+
+      .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 18px;
+      }
+
+      .title {
+        font-size: 15px;
+      }
+
+      .subtitle {
+        font-size: 11px;
+      }
+
+      .top-actions {
+        gap: 8px;
+      }
+
+      .ghost-btn,
+      .burger-btn,
+      .menu-close {
+        min-height: 42px;
+        padding: 10px 12px;
+      }
+
+      .icon-label {
+        display: none;
+      }
+
+      .burger-btn {
+        min-width: 42px;
+        padding-inline: 11px;
+      }
+
+      .card {
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .stats-primary {
+        gap: 8px;
+      }
+
+      .stats-secondary {
+        flex-wrap: nowrap;
+        overflow: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .stats-secondary::-webkit-scrollbar,
+      .menu-body::-webkit-scrollbar {
+        display: none;
+      }
+
+      .stats-secondary .pill {
+        flex: 0 0 auto;
+      }
+
+      .insight-row {
+        grid-auto-flow: column;
+        grid-template-columns: 88% 118%;
+        overflow: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        scroll-snap-type: x proximity;
+      }
+
+      .insight-row > * {
+        scroll-snap-align: start;
+      }
+
+      .mastery-grid {
+        grid-template-columns: repeat(7, minmax(66px, 1fr));
+      }
+
+      .staff-wrap {
+        min-height: 318px;
+        padding: 8px 6px 6px;
+      }
+
+      .combo-pop {
+        max-width: min(250px, 72vw);
+        padding: 9px 12px;
+      }
+
+      .feedback {
+        min-height: 24px;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .answer-tray {
+        position: sticky;
+        bottom: calc(8px + var(--safe-bottom));
+        z-index: 10;
+        margin-top: -2px;
+        padding-top: 2px;
+      }
+
+      .answer-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border-radius: 18px;
+        background: rgba(8, 14, 24, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px);
+      }
+
+      .note-btn {
+        min-height: 58px;
+        padding: 12px 6px;
+        border-radius: 14px;
+        font-size: 24px;
+      }
+
+      .game-over-title {
+        font-size: 30px;
+      }
+
+      .settings-drawer {
+        inset: auto 8px 8px 8px;
+        width: auto;
+        height: min(var(--app-height-82), 760px);
+        border-radius: 24px;
+        transform: translateY(108%);
+      }
+
+      .settings-drawer.show {
+        transform: translateY(0);
+      }
+
+      .theme-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .brand {
+        min-width: 0;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .stats-primary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .lives-display {
+        justify-content: center;
+      }
+
+      .staff-wrap {
+        min-height: 292px;
+      }
+
+      .answer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .telegram-browser .topbar,
+    .telegram-browser .card,
+    .telegram-browser .settings-drawer,
+    .telegram-browser .settings-overlay,
+    .telegram-browser .answer-grid,
+    .telegram-browser .game-over-overlay {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .telegram-browser .topbar {
+      position: relative;
+      top: auto;
+    }
+
+    .telegram-browser .answer-tray {
+      position: static;
+      bottom: auto;
+    }
+
+    .telegram-browser .answer-grid {
+      background: rgba(8, 14, 24, 0.92);
+    }
+
+    .telegram-browser .settings-drawer {
+      height: min(var(--app-height-88), 760px);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">&#9835;</div>
+        <div class="brand-copy">
+          <div class="title">Notenlerntrainer</div>
+          <div class="subtitle">Mehr Flow, mehr Revanche, mehr Mobile-Komfort.</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="ghost-btn icon-btn" id="toneBtn" aria-label="Zielton abspielen" title="Zielton abspielen">
+          <span>Ton</span>
+        </button>
+        <button class="ghost-btn" id="nextBtn">
+          <span class="icon-label">Ueberspringen</span>
+          <span aria-hidden="true">&#8618;</span>
+        </button>
+        <button class="burger-btn" id="menuToggle" aria-expanded="false" aria-controls="settingsDrawer">
+          <span class="burger-icon"><span></span></span>
+          <span class="icon-label">Settings</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <aside class="settings-drawer" id="settingsDrawer" aria-hidden="true">
+      <div class="menu-header">
+        <div class="menu-title">Einstellungen</div>
+        <button class="menu-close" id="menuClose">Schliessen</button>
+      </div>
+
+      <div class="menu-body">
+        <div class="menu-section">
+          <div class="menu-label">Schluessel</div>
+          <div class="segmented" id="modeButtons">
+            <button data-mode="treble" class="active">Violine</button>
+            <button data-mode="bass">Bass</button>
+            <button data-mode="mixed">Mix</button>
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <div class="menu-label">Schwierigkeit</div>
+          <div class="segmented" id="difficultyButtons">
+            <button data-difficulty="easy" class="active">Easy</button>
+            <button data-difficulty="medium">Medium</button>
+            <button data-difficulty="hard">Hard</button>
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <div class="menu-label">Spielmodus</div>
+          <div class="segmented" id="gameModeButtons">
+            <button data-game-mode="classic" class="active">Classic</button>
+            <button data-game-mode="survival">Survival</button>
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <div class="menu-label">Audio</div>
+          <label class="toggle-row"><span>FX-Sounds</span><input type="checkbox" id="audioToggle" checked></label>
+          <label class="toggle-row"><span>Audiomodus</span><input type="checkbox" id="noteAudioToggle"></label>
+        </div>
+
+        <div class="menu-section">
+          <div class="menu-label">Themes</div>
+          <div class="theme-grid" id="themeGrid"></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="card">
+      <div class="stats">
+        <div class="stats-primary">
+          <div class="lives-display" id="livesDisplay" aria-label="Leben"></div>
+          <div class="pill level-pill">Level <strong id="levelCount">1</strong></div>
+          <div class="pill mode-pill" id="modePill">Classic</div>
+          <div class="pill boss-pill" id="bossPill" hidden>Boss</div>
+          <div class="pill">Theme <strong id="themeName">Aurora</strong></div>
+        </div>
+
+        <div class="stats-secondary">
+          <div class="pill">XP <strong id="xpCount">0/8</strong></div>
+          <div class="pill">Serie <strong id="streakCount">0</strong></div>
+          <div class="pill">Beste <strong id="bestStreakCount">0</strong></div>
+          <div class="pill speed-pill" id="speedPill">Blitz <strong id="speedCount">0</strong> <span id="speedTierLabel">Calm</span></div>
+          <div class="pill">Fast XP <strong id="fastBonusCount">0</strong></div>
+          <div class="pill">Schnittzeit <strong id="avgTimeCount">-</strong></div>
+          <div class="pill">Aktuell <strong id="timerCount">0.0s</strong></div>
+        </div>
+      </div>
+
+      <div class="insight-row">
+        <section class="mission-card">
+          <div class="panel-head">
+            <div class="panel-label">Mini-Mission</div>
+            <div class="mission-reward" id="missionReward">+2 XP</div>
+          </div>
+          <div class="mission-title" id="missionTitle">Start klar machen</div>
+          <div class="mission-desc" id="missionDesc">Triff die ersten Noten direkt.</div>
+          <div class="mission-progress-row">
+            <div class="progress-rail"><div class="progress-fill" id="missionFill"></div></div>
+            <div class="mission-count" id="missionCount">0/1</div>
+          </div>
+        </section>
+
+        <section class="mastery-panel">
+          <div class="panel-head">
+            <div class="panel-label">Mastery</div>
+            <div class="mastery-summary" id="masterySummary">Weakest: C</div>
+          </div>
+          <div class="mastery-grid" id="masteryGrid"></div>
+        </section>
+      </div>
+
+      <div class="staff-wrap">
+        <div class="staff-hud">
+          <div class="boss-banner" id="bossBanner"></div>
+          <div class="combo-pop" id="comboPop" aria-live="polite">
+            <div class="combo-title" id="comboTitle"></div>
+            <div class="combo-subtitle" id="comboSubtitle"></div>
+          </div>
+        </div>
+
+        <svg id="staffSvg" viewBox="0 0 860 500" aria-label="Notensystem"></svg>
+        <svg id="fxSvg" viewBox="0 0 860 500" aria-hidden="true"></svg>
+
+        <div class="game-over-overlay" id="gameOverOverlay" role="button" tabindex="0" aria-label="Neustart">
+          <div class="game-over-panel">
+            <div class="game-over-title">Game Over</div>
+            <div class="game-over-sub" id="gameOverStats">Level 1 · Serie 0</div>
+            <div class="game-over-hint">Antippen und direkt weiter.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="feedback" class="feedback">Welche Note ist das?</div>
+
+      <div class="answer-tray">
+        <div class="answer-grid" id="answerGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'notenlerntrainer-v2';
+    const NOTE_ORDER = ['C', 'D', 'E', 'F', 'G', 'A', 'H'];
+    const NOTE_TO_SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, H: 11 };
+    const NOTE_ICON = '\u266A';
+    const TREBLE_CLEF = '\uD834\uDD1E';
+    const BASS_CLEF = '\uD834\uDD22';
+    const DEFAULT_MASTERY = 0;
+    const THEME_IDS = ['aurora', 'sunset', 'mint', 'brass', 'neon'];
+    const SPEED_TIERS = [
+      { level: 0, threshold: 0, name: 'Calm', unlockXp: 0, fastChainXp: 0, lifeReward: 0, durationText: '' },
+      { level: 1, threshold: 3, name: 'Spark', unlockXp: 1, fastChainXp: 0, lifeReward: 0, durationText: '+1 XP' },
+      { level: 2, threshold: 5, name: 'Rush', unlockXp: 2, fastChainXp: 1, lifeReward: 0, durationText: '+2 XP · Fast +1' },
+      { level: 3, threshold: 8, name: 'Frenzy', unlockXp: 3, fastChainXp: 2, lifeReward: 0, durationText: '+3 XP · Fast +2' },
+      { level: 4, threshold: 12, name: 'Overdrive', unlockXp: 5, fastChainXp: 3, lifeReward: 1, durationText: '+5 XP · Fast +3 · +1 Life' }
+    ];
+    const SPEED_LOOP_STEP = 4;
+
+    const THEMES = {
+      aurora: {
+        name: 'Aurora',
+        bg1: '#08131f',
+        bg2: '#10263d',
+        bg3: '#19496f',
+        panel: 'rgba(255,255,255,0.08)',
+        panelStrong: 'rgba(12,22,36,0.78)',
+        border: 'rgba(255,255,255,0.14)',
+        text: '#eff6ff',
+        muted: '#93a6c4',
+        accent: '#71c4ff',
+        accent2: '#ffd682',
+        good: '#8ff1bc',
+        bad: '#ffb6bf'
+      },
+      sunset: {
+        name: 'Sunset Tape',
+        bg1: '#1b0d08',
+        bg2: '#432218',
+        bg3: '#7f4329',
+        panel: 'rgba(255,244,236,0.08)',
+        panelStrong: 'rgba(34,18,12,0.8)',
+        border: 'rgba(255,236,220,0.14)',
+        text: '#fff3ea',
+        muted: '#d2b4a2',
+        accent: '#ff9e66',
+        accent2: '#ffd26c',
+        good: '#a9f6c0',
+        bad: '#ffb3a0'
+      },
+      mint: {
+        name: 'Mint Arcade',
+        bg1: '#071613',
+        bg2: '#10342b',
+        bg3: '#1a6552',
+        panel: 'rgba(244,255,252,0.08)',
+        panelStrong: 'rgba(9,22,18,0.8)',
+        border: 'rgba(226,255,247,0.14)',
+        text: '#edfdf6',
+        muted: '#9ecdbd',
+        accent: '#61e8b4',
+        accent2: '#8fe4ff',
+        good: '#a4ffd8',
+        bad: '#ffb9c8'
+      },
+      brass: {
+        name: 'Brass Night',
+        bg1: '#12100a',
+        bg2: '#2e2415',
+        bg3: '#5d4b23',
+        panel: 'rgba(255,248,232,0.08)',
+        panelStrong: 'rgba(22,18,10,0.82)',
+        border: 'rgba(255,241,202,0.14)',
+        text: '#fff8ea',
+        muted: '#d6c39c',
+        accent: '#f0c45d',
+        accent2: '#ffe8a0',
+        good: '#baf1c6',
+        bad: '#ffbfad'
+      },
+      neon: {
+        name: 'Neon Grid',
+        bg1: '#0b0820',
+        bg2: '#1d1755',
+        bg3: '#2a2f8e',
+        panel: 'rgba(243,245,255,0.08)',
+        panelStrong: 'rgba(11,11,34,0.82)',
+        border: 'rgba(233,237,255,0.14)',
+        text: '#f4f6ff',
+        muted: '#a6ace5',
+        accent: '#86a2ff',
+        accent2: '#6ef0ff',
+        good: '#9ff4d2',
+        bad: '#ffb7da'
+      }
+    };
+
+    const TREBLE_NOTES = [
+      { name: 'A', octave: 3, staffStep: -2, clef: 'treble' },
+      { name: 'H', octave: 3, staffStep: -1, clef: 'treble' },
+      { name: 'C', octave: 4, staffStep: 0, clef: 'treble' },
+      { name: 'D', octave: 4, staffStep: 1, clef: 'treble' },
+      { name: 'E', octave: 4, staffStep: 2, clef: 'treble' },
+      { name: 'F', octave: 4, staffStep: 3, clef: 'treble' },
+      { name: 'G', octave: 4, staffStep: 4, clef: 'treble' },
+      { name: 'A', octave: 4, staffStep: 5, clef: 'treble' },
+      { name: 'H', octave: 4, staffStep: 6, clef: 'treble' },
+      { name: 'C', octave: 5, staffStep: 7, clef: 'treble' },
+      { name: 'D', octave: 5, staffStep: 8, clef: 'treble' },
+      { name: 'E', octave: 5, staffStep: 9, clef: 'treble' },
+      { name: 'F', octave: 5, staffStep: 10, clef: 'treble' },
+      { name: 'G', octave: 5, staffStep: 11, clef: 'treble' },
+      { name: 'A', octave: 5, staffStep: 12, clef: 'treble' },
+      { name: 'H', octave: 5, staffStep: 13, clef: 'treble' },
+      { name: 'C', octave: 6, staffStep: 14, clef: 'treble' }
+    ];
+
+    const BASS_NOTES = [
+      { name: 'C', octave: 2, staffStep: -2, clef: 'bass' },
+      { name: 'D', octave: 2, staffStep: -1, clef: 'bass' },
+      { name: 'E', octave: 2, staffStep: 0, clef: 'bass' },
+      { name: 'F', octave: 2, staffStep: 1, clef: 'bass' },
+      { name: 'G', octave: 2, staffStep: 2, clef: 'bass' },
+      { name: 'A', octave: 2, staffStep: 3, clef: 'bass' },
+      { name: 'H', octave: 2, staffStep: 4, clef: 'bass' },
+      { name: 'C', octave: 3, staffStep: 5, clef: 'bass' },
+      { name: 'D', octave: 3, staffStep: 6, clef: 'bass' },
+      { name: 'E', octave: 3, staffStep: 7, clef: 'bass' },
+      { name: 'F', octave: 3, staffStep: 8, clef: 'bass' },
+      { name: 'G', octave: 3, staffStep: 9, clef: 'bass' },
+      { name: 'A', octave: 3, staffStep: 10, clef: 'bass' },
+      { name: 'H', octave: 3, staffStep: 11, clef: 'bass' },
+      { name: 'C', octave: 4, staffStep: 12, clef: 'bass' },
+      { name: 'D', octave: 4, staffStep: 13, clef: 'bass' },
+      { name: 'E', octave: 4, staffStep: 14, clef: 'bass' }
+    ];
+
+    const modeButtons = [...document.querySelectorAll('#modeButtons button')];
+    const difficultyButtons = [...document.querySelectorAll('#difficultyButtons button')];
+    const gameModeButtons = [...document.querySelectorAll('#gameModeButtons button')];
+    const audioToggle = document.getElementById('audioToggle');
+    const noteAudioToggle = document.getElementById('noteAudioToggle');
+    const nextBtn = document.getElementById('nextBtn');
+    const toneBtn = document.getElementById('toneBtn');
+    const menuToggle = document.getElementById('menuToggle');
+    const menuClose = document.getElementById('menuClose');
+    const settingsDrawer = document.getElementById('settingsDrawer');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const answerGrid = document.getElementById('answerGrid');
+    const feedbackEl = document.getElementById('feedback');
+    const staffSvg = document.getElementById('staffSvg');
+    const fxSvg = document.getElementById('fxSvg');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const gameOverStats = document.getElementById('gameOverStats');
+    const levelCount = document.getElementById('levelCount');
+    const xpCount = document.getElementById('xpCount');
+    const streakCount = document.getElementById('streakCount');
+    const bestStreakCount = document.getElementById('bestStreakCount');
+    const speedCount = document.getElementById('speedCount');
+    const speedTierLabel = document.getElementById('speedTierLabel');
+    const speedPill = document.getElementById('speedPill');
+    const fastBonusCount = document.getElementById('fastBonusCount');
+    const livesDisplay = document.getElementById('livesDisplay');
+    const avgTimeCount = document.getElementById('avgTimeCount');
+    const timerCount = document.getElementById('timerCount');
+    const bossBanner = document.getElementById('bossBanner');
+    const bossPill = document.getElementById('bossPill');
+    const comboPop = document.getElementById('comboPop');
+    const comboTitle = document.getElementById('comboTitle');
+    const comboSubtitle = document.getElementById('comboSubtitle');
+    const missionTitle = document.getElementById('missionTitle');
+    const missionDesc = document.getElementById('missionDesc');
+    const missionReward = document.getElementById('missionReward');
+    const missionFill = document.getElementById('missionFill');
+    const missionCount = document.getElementById('missionCount');
+    const masteryGrid = document.getElementById('masteryGrid');
+    const masterySummary = document.getElementById('masterySummary');
+    const themeGrid = document.getElementById('themeGrid');
+    const themeName = document.getElementById('themeName');
+    const modePill = document.getElementById('modePill');
+
+    let lastWindowWidth = window.innerWidth;
+    const browserUa = navigator.userAgent || '';
+    const isTelegramBrowser = /Telegram|TGWebApp/i.test(browserUa);
+    const isEmbeddedWebView = /(Telegram|TGWebApp|wv|FBAN|FBAV|Instagram)/i.test(browserUa);
+
+    const state = {
+      mode: 'treble',
+      difficulty: 'easy',
+      audioEnabled: true,
+      noteAudioMode: false,
+      survivalMode: false,
+      audioCtx: null,
+      current: null,
+      currentFlags: { revenge: false, boss: false },
+      noteStats: {},
+      noteMastery: {},
+      roundStartedAt: 0,
+      roundTimerInterval: null,
+      level: 1,
+      xp: 0,
+      streak: 0,
+      bestStreak: 0,
+      speedStreak: 0,
+      speedTier: 0,
+      speedLoop: 0,
+      bestSpeedTier: 0,
+      bestSpeedLoop: 0,
+      fastBonusXp: 0,
+      speedActive: false,
+      speedTimer: null,
+      comboTimer: null,
+      nextRoundTimeout: null,
+      roundLocked: false,
+      audioPriorityDelayMs: 0,
+      lives: 5,
+      maxLives: 5,
+      gameOver: false,
+      lastRunLevel: 1,
+      lastRunStreak: 0,
+      levelMistakes: 0,
+      levelSkips: 0,
+      roundCount: 0,
+      revengeQueue: [],
+      mission: null,
+      missionsCompleted: 0,
+      perfectRounds: 0,
+      bossClears: 0,
+      unlockedThemes: ['aurora'],
+      selectedTheme: 'aurora',
+      activeTheme: null,
+      boss: {
+        active: false,
+        level: 0,
+        sequence: [],
+        index: 0,
+        clearedLevels: [],
+        failedLevels: []
+      }
+    };
+
+    function xpNeeded(level = state.level) {
+      return 5 + level * 3;
+    }
+
+    function getDifficultyMultiplier() {
+      if (state.difficulty === 'easy') return 0.55;
+      if (state.difficulty === 'medium') return 1;
+      return 1.7;
+    }
+
+    function getNoteKey(note) {
+      return `${note.clef}:${note.name}:${note.octave}`;
+    }
+
+    function formatSeconds(value) {
+      return `${value.toFixed(1)}s`;
+    }
+
+    function getElapsedSecondsCapped() {
+      return Math.min(5, Math.max(0, (performance.now() - state.roundStartedAt) / 1000));
+    }
+
+    function getModeLabel() {
+      return state.survivalMode ? 'Survival' : 'Classic';
+    }
+
+    function getOrCreateNoteStats(note) {
+      const key = getNoteKey(note);
+      if (!state.noteStats[key]) state.noteStats[key] = { attempts: 0, totalTime: 0, averageTime: 0, wrong: 0 };
+      return state.noteStats[key];
+    }
+
+    function ensureMastery(noteName) {
+      if (!state.noteMastery[noteName]) {
+        state.noteMastery[noteName] = { value: DEFAULT_MASTERY, correct: 0, wrong: 0, totalTime: 0, averageTime: 0, boost: 0 };
+      }
+      const mastery = state.noteMastery[noteName];
+      mastery.correct = Number.isFinite(mastery.correct) ? mastery.correct : 0;
+      mastery.wrong = Number.isFinite(mastery.wrong) ? mastery.wrong : 0;
+      mastery.totalTime = Number.isFinite(mastery.totalTime) ? mastery.totalTime : 0;
+      mastery.averageTime = Number.isFinite(mastery.averageTime) ? mastery.averageTime : 0;
+      mastery.boost = Number.isFinite(mastery.boost) ? mastery.boost : 0;
+      mastery.value = Number.isFinite(mastery.value) ? mastery.value : DEFAULT_MASTERY;
+      return recalculateMastery(noteName);
+    }
+
+    function recalculateMastery(noteName) {
+      const mastery = state.noteMastery[noteName];
+      const seen = mastery.correct + mastery.wrong;
+      if (seen === 0) {
+        mastery.averageTime = 0;
+        mastery.value = Math.max(0, Math.min(24, DEFAULT_MASTERY + mastery.boost));
+        return mastery;
+      }
+
+      const accuracy = mastery.correct / Math.max(1, seen);
+      const avgTime = mastery.correct > 0 ? mastery.totalTime / mastery.correct : 5;
+      const timeScore = avgTime <= 0.5 ? 1 : Math.max(0, 1 - ((avgTime - 0.5) / 2.5));
+      const accuracyScore = Math.max(0, Math.min(1, (accuracy - 0.4) / 0.6));
+      const confidence = Math.min(1, seen / 18);
+      let value = (((timeScore * 0.78) + (accuracyScore * 0.22)) * (0.26 + confidence * 0.74) * 100) + mastery.boost;
+
+      if (avgTime > 0.5 || accuracy < 0.985 || seen < 12) value = Math.min(value, 99);
+
+      mastery.averageTime = avgTime;
+      mastery.value = Math.max(0, Math.min(100, Math.round(value)));
+      return mastery;
+    }
+
+    function recordMasteryHit(noteName, elapsed) {
+      const mastery = ensureMastery(noteName);
+      mastery.correct += 1;
+      mastery.totalTime += elapsed;
+      return recalculateMastery(noteName);
+    }
+
+    function recordMasteryMiss(noteName) {
+      const mastery = ensureMastery(noteName);
+      mastery.wrong += 1;
+      return recalculateMastery(noteName);
+    }
+
+    function adjustMastery(noteName, delta) {
+      const mastery = ensureMastery(noteName);
+      mastery.boost = Math.max(0, Math.min(18, mastery.boost + delta));
+      return recalculateMastery(noteName).value;
+    }
+
+    function choosePool() {
+      if (state.mode === 'treble') return TREBLE_NOTES.slice();
+      if (state.mode === 'bass') return BASS_NOTES.slice();
+      return [...TREBLE_NOTES, ...BASS_NOTES];
+    }
+
+    function getAverageMastery() {
+      const total = NOTE_ORDER.reduce((sum, noteName) => sum + ensureMastery(noteName).value, 0);
+      return Math.round(total / NOTE_ORDER.length);
+    }
+
+    function getWeakestNoteName() {
+      let weakest = NOTE_ORDER[0];
+      for (const noteName of NOTE_ORDER) {
+        if (ensureMastery(noteName).value < ensureMastery(weakest).value) weakest = noteName;
+      }
+      return weakest;
+    }
+
+    function saveProgress() {
+      const persisted = {
+        mode: state.mode,
+        difficulty: state.difficulty,
+        audioEnabled: state.audioEnabled,
+        noteAudioMode: state.noteAudioMode,
+        survivalMode: state.survivalMode,
+        noteStats: state.noteStats,
+        noteMastery: state.noteMastery,
+        unlockedThemes: state.unlockedThemes,
+        selectedTheme: state.selectedTheme,
+        missionsCompleted: state.missionsCompleted,
+        perfectRounds: state.perfectRounds,
+        bossClears: state.bossClears
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+      } catch (_) {}
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (['treble', 'bass', 'mixed'].includes(data.mode)) state.mode = data.mode;
+        if (['easy', 'medium', 'hard'].includes(data.difficulty)) state.difficulty = data.difficulty;
+        state.audioEnabled = data.audioEnabled !== false;
+        state.noteAudioMode = data.noteAudioMode === true;
+        state.survivalMode = data.survivalMode === true;
+        state.noteStats = data.noteStats && typeof data.noteStats === 'object' ? data.noteStats : {};
+        state.noteMastery = data.noteMastery && typeof data.noteMastery === 'object' ? data.noteMastery : {};
+        if (Array.isArray(data.unlockedThemes) && data.unlockedThemes.length) {
+          state.unlockedThemes = data.unlockedThemes.filter(themeId => THEME_IDS.includes(themeId));
+          if (!state.unlockedThemes.includes('aurora')) state.unlockedThemes.unshift('aurora');
+        }
+        if (THEME_IDS.includes(data.selectedTheme) && state.unlockedThemes.includes(data.selectedTheme)) {
+          state.selectedTheme = data.selectedTheme;
+        }
+        state.missionsCompleted = Number.isFinite(data.missionsCompleted) ? data.missionsCompleted : 0;
+        state.perfectRounds = Number.isFinite(data.perfectRounds) ? data.perfectRounds : 0;
+        state.bossClears = Number.isFinite(data.bossClears) ? data.bossClears : 0;
+      } catch (_) {}
+    }
+
+    function clampNumber(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function fract(value) {
+      return value - Math.floor(value);
+    }
+
+    function wrapHue(value) {
+      const wrapped = value % 360;
+      return wrapped < 0 ? wrapped + 360 : wrapped;
+    }
+
+    function hexToRgb(hex) {
+      const clean = String(hex || '').replace('#', '');
+      if (clean.length !== 6) return { r: 113, g: 196, b: 255 };
+      const value = parseInt(clean, 16);
+      return {
+        r: (value >> 16) & 255,
+        g: (value >> 8) & 255,
+        b: value & 255
+      };
+    }
+
+    function hexToRgbString(hex) {
+      const rgb = hexToRgb(hex);
+      return `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+    }
+
+    function rgbToHex(r, g, b) {
+      const toHex = value => clampNumber(Math.round(value), 0, 255).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function hexToHsl(hex) {
+      const rgb = hexToRgb(hex);
+      const r = rgb.r / 255;
+      const g = rgb.g / 255;
+      const b = rgb.b / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const lightness = (max + min) / 2;
+      const delta = max - min;
+      let hue = 0;
+      let saturation = 0;
+
+      if (delta !== 0) {
+        saturation = delta / (1 - Math.abs(2 * lightness - 1));
+        if (max === r) hue = ((g - b) / delta) % 6;
+        else if (max === g) hue = ((b - r) / delta) + 2;
+        else hue = ((r - g) / delta) + 4;
+        hue *= 60;
+      }
+
+      return {
+        h: wrapHue(hue),
+        s: saturation * 100,
+        l: lightness * 100
+      };
+    }
+
+    function hslToHex(h, s, l) {
+      const hue = wrapHue(h);
+      const saturation = clampNumber(s, 0, 100) / 100;
+      const lightness = clampNumber(l, 0, 100) / 100;
+      const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+      const segment = hue / 60;
+      const secondary = chroma * (1 - Math.abs((segment % 2) - 1));
+      let red = 0;
+      let green = 0;
+      let blue = 0;
+
+      if (segment >= 0 && segment < 1) {
+        red = chroma;
+        green = secondary;
+      } else if (segment < 2) {
+        red = secondary;
+        green = chroma;
+      } else if (segment < 3) {
+        green = chroma;
+        blue = secondary;
+      } else if (segment < 4) {
+        green = secondary;
+        blue = chroma;
+      } else if (segment < 5) {
+        red = secondary;
+        blue = chroma;
+      } else {
+        red = chroma;
+        blue = secondary;
+      }
+
+      const match = lightness - chroma / 2;
+      return rgbToHex((red + match) * 255, (green + match) * 255, (blue + match) * 255);
+    }
+
+    function rgbaFromHex(hex, alpha) {
+      return `rgba(${hexToRgbString(hex)}, ${clampNumber(alpha, 0, 1).toFixed(3)})`;
+    }
+
+    function mixHexColors(colorA, colorB, weightB = 0.5) {
+      const parse = color => {
+        const clean = String(color || '').replace('#', '');
+        if (clean.length !== 6) return { r: 255, g: 255, b: 255 };
+        const value = parseInt(clean, 16);
+        return {
+          r: (value >> 16) & 255,
+          g: (value >> 8) & 255,
+          b: value & 255
+        };
+      };
+      const a = parse(colorA);
+      const b = parse(colorB);
+      const weightA = 1 - weightB;
+      const toHex = value => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+      return `#${toHex(a.r * weightA + b.r * weightB)}${toHex(a.g * weightA + b.g * weightB)}${toHex(a.b * weightA + b.b * weightB)}`;
+    }
+
+    // Golden-ratio drift keeps each level feeling fresh without falling into an obvious short loop.
+    function getProceduralTheme(themeId = state.selectedTheme, level = state.level) {
+      const base = THEMES[themeId] || THEMES.aurora;
+      const themeIndex = Math.max(0, THEME_IDS.indexOf(themeId));
+      const seed = (level * 0.754877666) + (themeIndex * 0.618033989) + 0.314159265;
+      const drift = (multiplier, spread) => (fract(seed * multiplier) - 0.5) * spread;
+      const accentBase = hexToHsl(base.accent);
+      const accent2Base = hexToHsl(base.accent2);
+      const goodBase = hexToHsl(base.good);
+      const badBase = hexToHsl(base.bad);
+      const hueShift = drift(1.073, 34) + drift(2.417, 12);
+      const accentHue = wrapHue(accentBase.h + hueShift);
+      const accent2Hue = wrapHue(accent2Base.h + hueShift * 0.82 + drift(1.733, 16));
+      const accent = hslToHex(
+        accentHue,
+        clampNumber(accentBase.s * 0.82 + 7 + drift(1.917, 8), 48, 76),
+        clampNumber(accentBase.l + 8 + drift(2.371, 6), 68, 84)
+      );
+      const accent2 = hslToHex(
+        accent2Hue,
+        clampNumber(accent2Base.s * 0.8 + 6 + drift(2.089, 8), 44, 74),
+        clampNumber(accent2Base.l + 7 + drift(2.669, 6), 70, 86)
+      );
+      const moodHue = wrapHue((accentHue * 0.58) + (accent2Hue * 0.42) - 18 + drift(0.887, 18));
+      const bg1 = hslToHex(
+        moodHue - 26,
+        clampNumber(36 + drift(1.311, 8), 28, 44),
+        clampNumber(10.5 + drift(1.119, 3.6), 8, 14)
+      );
+      const bg2 = hslToHex(
+        moodHue - 8,
+        clampNumber(42 + drift(1.593, 10), 34, 54),
+        clampNumber(18.5 + drift(1.437, 4.2), 15, 25)
+      );
+      const bg3 = hslToHex(
+        moodHue + 10,
+        clampNumber(48 + drift(1.977, 12), 38, 62),
+        clampNumber(30 + drift(1.697, 6), 24, 40)
+      );
+      const good = hslToHex(
+        wrapHue(goodBase.h + hueShift * 0.24 - 4 + drift(0.713, 8)),
+        clampNumber(goodBase.s * 0.8 + 4, 46, 74),
+        clampNumber(goodBase.l + 6 + drift(1.141, 5), 70, 84)
+      );
+      const bad = hslToHex(
+        wrapHue(badBase.h + hueShift * 0.18 + 4 + drift(0.583, 6)),
+        clampNumber(badBase.s * 0.82 + 4, 50, 78),
+        clampNumber(badBase.l + 5 + drift(1.269, 5), 72, 86)
+      );
+      const panelTint = mixHexColors('#ffffff', accent, 0.08);
+      const borderTint = mixHexColors('#ffffff', accent, 0.18);
+      const text = mixHexColors('#ffffff', accent, 0.07);
+      const muted = mixHexColors(mixHexColors('#d7e3ff', accent, 0.14), bg3, 0.18);
+
+      return {
+        ...base,
+        bg1,
+        bg2,
+        bg3,
+        panel: rgbaFromHex(panelTint, 0.078 + fract(seed * 2.03) * 0.018),
+        panelStrong: rgbaFromHex(mixHexColors(bg1, '#080d16', 0.28), 0.78 + fract(seed * 1.57) * 0.05),
+        border: rgbaFromHex(borderTint, 0.13 + fract(seed * 1.93) * 0.03),
+        text,
+        muted,
+        accent,
+        accent2,
+        good,
+        bad
+      };
+    }
+
+    function getActiveTheme() {
+      return state.activeTheme || getProceduralTheme();
+    }
+
+    function updateViewportUnit() {
+      const height = window.innerHeight || document.documentElement.clientHeight || 0;
+      document.documentElement.style.setProperty('--app-height', `${height}px`);
+      document.documentElement.style.setProperty('--app-height-82', `${Math.round(height * 0.82)}px`);
+      document.documentElement.style.setProperty('--app-height-88', `${Math.round(height * 0.88)}px`);
+    }
+
+    function applyTheme() {
+      const theme = getProceduralTheme(state.selectedTheme, state.level);
+      state.activeTheme = theme;
+      const root = document.documentElement.style;
+      root.setProperty('--bg1', theme.bg1);
+      root.setProperty('--bg2', theme.bg2);
+      root.setProperty('--bg3', theme.bg3);
+      root.setProperty('--panel', theme.panel);
+      root.setProperty('--panel-strong', theme.panelStrong);
+      root.setProperty('--border', theme.border);
+      root.setProperty('--text', theme.text);
+      root.setProperty('--muted', theme.muted);
+      root.setProperty('--accent', theme.accent);
+      root.setProperty('--accent-2', theme.accent2);
+      root.setProperty('--good', theme.good);
+      root.setProperty('--bad', theme.bad);
+      root.setProperty('--accent-rgb', hexToRgbString(theme.accent));
+      root.setProperty('--accent-2-rgb', hexToRgbString(theme.accent2));
+      root.setProperty('--good-rgb', hexToRgbString(theme.good));
+      root.setProperty('--bad-rgb', hexToRgbString(theme.bad));
+      themeName.textContent = `${theme.name} · Level ${state.level}`;
+      renderThemeButtons();
+    }
+
+    function getThemeUnlockHint(themeId) {
+      if (themeId === 'aurora') return 'Standard';
+      if (themeId === 'sunset') return 'Ab Level 3';
+      if (themeId === 'mint') return '1x Perfect Round';
+      if (themeId === 'brass') return '1x Boss Clear';
+      if (themeId === 'neon') return '4 Missionen';
+      return '';
+    }
+
+    function renderThemeButtons() {
+      themeGrid.innerHTML = '';
+      for (const themeId of THEME_IDS) {
+        const theme = THEMES[themeId];
+        const unlocked = state.unlockedThemes.includes(themeId);
+        const button = document.createElement('button');
+        button.className = `theme-btn${state.selectedTheme === themeId ? ' active' : ''}`;
+        button.type = 'button';
+        button.disabled = !unlocked;
+        button.innerHTML = `
+          <div class="theme-topline">
+            <span>${theme.name}</span>
+            <span class="theme-swatch">
+              <span style="background:${theme.accent}"></span>
+              <span style="background:${theme.accent2}"></span>
+            </span>
+          </div>
+          <div class="theme-hint">${unlocked ? 'Aktivieren' : getThemeUnlockHint(themeId)}</div>
+        `;
+        button.addEventListener('click', () => {
+          if (!state.unlockedThemes.includes(themeId)) return;
+          state.selectedTheme = themeId;
+          applyTheme();
+          drawCurrentState();
+          saveProgress();
+        });
+        themeGrid.appendChild(button);
+      }
+    }
+
+    function showToast(title, subtitle = '', variant = 'good') {
+      clearTimeout(state.comboTimer);
+      comboTitle.textContent = title;
+      comboSubtitle.textContent = subtitle;
+      comboPop.className = `combo-pop show ${variant}`;
+      state.comboTimer = window.setTimeout(() => {
+        comboPop.classList.remove('show', 'good', 'bad', 'boss', 'perfect');
+      }, 1200);
+    }
+
+    function clearPendingRoundAdvance() {
+      if (!state.nextRoundTimeout) return;
+      clearTimeout(state.nextRoundTimeout);
+      state.nextRoundTimeout = null;
+    }
+
+    function unlockTheme(themeId, reasonText) {
+      if (state.unlockedThemes.includes(themeId)) return false;
+      state.unlockedThemes.push(themeId);
+      state.selectedTheme = themeId;
+      applyTheme();
+      showToast('Theme freigeschaltet', `${THEMES[themeId].name} · ${reasonText}`, 'perfect');
+      saveProgress();
+      return true;
+    }
+
+    function maybeUnlockThemes() {
+      if (state.level >= 3) unlockTheme('sunset', 'ab Level 3');
+      if (state.perfectRounds >= 1) unlockTheme('mint', 'durch Perfect Round');
+      if (state.bossClears >= 1) unlockTheme('brass', 'durch Boss Clear');
+      if (state.missionsCompleted >= 4) unlockTheme('neon', 'durch 4 Missionen');
+    }
+
+    function setFeedback(text, type = '') {
+      feedbackEl.textContent = text;
+      feedbackEl.className = `feedback${type ? ` ${type}` : ''}`;
+    }
+
+    function flashAnswerButton(noteName, variant) {
+      const button = [...answerGrid.children].find(child => child.textContent === noteName);
+      if (!button) return;
+      button.classList.remove('flash-good', 'flash-bad');
+      void button.offsetWidth;
+      button.classList.add(variant === 'good' ? 'flash-good' : 'flash-bad');
+    }
+
+    function vibrate(pattern) {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    function stopRoundTimer() {
+      if (state.roundTimerInterval) clearInterval(state.roundTimerInterval);
+      state.roundTimerInterval = null;
+    }
+
+    function startRoundTimer() {
+      stopRoundTimer();
+      state.roundStartedAt = performance.now();
+      timerCount.textContent = '0.0s';
+      state.roundTimerInterval = window.setInterval(() => {
+        timerCount.textContent = formatSeconds(getElapsedSecondsCapped());
+      }, 100);
+    }
+
+    function updateCurrentAverageTime() {
+      if (!state.current) {
+        avgTimeCount.textContent = '-';
+        return;
+      }
+      const stats = getOrCreateNoteStats(state.current);
+      avgTimeCount.textContent = stats.attempts > 0 ? formatSeconds(stats.averageTime) : '-';
+    }
+
+    function renderLives() {
+      livesDisplay.innerHTML = '';
+      for (let i = 0; i < state.maxLives; i++) {
+        const life = document.createElement('span');
+        life.className = `life-note${i >= state.lives ? ' lost' : ''}`;
+        life.textContent = NOTE_ICON;
+        life.setAttribute('aria-hidden', 'true');
+        livesDisplay.appendChild(life);
+      }
+    }
+
+    function updateBossBanner() {
+      if (!state.boss.active) {
+        bossBanner.textContent = '';
+        bossBanner.classList.remove('show');
+        bossPill.hidden = true;
+        return;
+      }
+      const remaining = state.boss.sequence.length - state.boss.index;
+      bossBanner.textContent = `Boss-Level ${state.boss.level} · ${remaining} Noten uebrig`;
+      bossBanner.classList.add('show');
+      bossPill.hidden = false;
+      bossPill.textContent = `Boss ${state.boss.index + 1}/${state.boss.sequence.length}`;
+    }
+
+    function renderMission() {
+      if (!state.mission) return;
+      missionTitle.textContent = state.mission.title;
+      missionDesc.textContent = state.mission.description;
+      missionReward.textContent = state.mission.rewardLabel;
+      const ratio = state.mission.target > 0 ? Math.min(1, state.mission.progress / state.mission.target) : 0;
+      missionFill.style.width = `${ratio * 100}%`;
+      missionCount.textContent = `${state.mission.progress}/${state.mission.target}`;
+    }
+
+    function renderMastery() {
+      masteryGrid.innerHTML = '';
+      const weakest = getWeakestNoteName();
+      masterySummary.textContent = `Weakest: ${weakest} · Avg ${getAverageMastery()}% · 100 bei <=0.5s`;
+      for (const noteName of NOTE_ORDER) {
+        const masteryState = ensureMastery(noteName);
+        const mastery = masteryState.value;
+        const isCurrent = state.current && state.current.name === noteName;
+        const isRevenge = state.currentFlags.revenge && isCurrent;
+        const chip = document.createElement('div');
+        chip.className = `mastery-chip${isCurrent ? ' current' : ''}${noteName === weakest ? ' weak' : ''}${isRevenge ? ' revenge' : ''}`;
+        chip.innerHTML = `
+          <div class="mastery-note">${noteName}</div>
+          <div class="mastery-value">${mastery}%${masteryState.correct > 0 ? ` · ${formatSeconds(masteryState.averageTime)}` : ''}</div>
+          <div class="mastery-bar"><div class="mastery-bar-fill" style="width:${mastery}%"></div></div>
+        `;
+        masteryGrid.appendChild(chip);
+      }
+    }
+
+    function updateStats() {
+      const speedStatus = getCurrentSpeedStatus();
+      const speedTier = speedStatus.tier;
+      levelCount.textContent = state.level;
+      xpCount.textContent = `${state.xp}/${xpNeeded()}`;
+      streakCount.textContent = state.streak;
+      bestStreakCount.textContent = state.bestStreak;
+      speedCount.textContent = String(state.speedStreak);
+      speedTierLabel.textContent = speedStatus.label;
+      fastBonusCount.textContent = String(state.fastBonusXp);
+      modePill.textContent = getModeLabel();
+      renderLives();
+      speedPill.classList.toggle('active', state.speedActive);
+      speedPill.classList.remove('speed-tier-1', 'speed-tier-2', 'speed-tier-3', 'speed-tier-4');
+      if (speedTier.level > 0) speedPill.classList.add(`speed-tier-${speedTier.level}`);
+      toneBtn.disabled = !state.noteAudioMode;
+      toneBtn.style.opacity = state.noteAudioMode ? '1' : '0.45';
+      updateCurrentAverageTime();
+      updateBossBanner();
+      renderMission();
+      renderMastery();
+    }
+
+    function getStaffLayout() {
+      const isMobile = window.innerWidth <= 760;
+      const isTiny = window.innerWidth <= 460;
+      return {
+        isMobile,
+        isTiny,
+        left: isTiny ? 168 : isMobile ? 156 : 110,
+        right: isTiny ? 690 : isMobile ? 704 : 790,
+        lineGap: isTiny ? 29 : isMobile ? 30 : 32,
+        topY: isTiny ? 130 : isMobile ? 134 : 158,
+        noteX: isTiny ? 474 : isMobile ? 478 : 470,
+        ledgerHalfWidth: 34,
+        noteRx: isTiny ? 23 : isMobile ? 22 : 20,
+        noteRy: isTiny ? 14.5 : isMobile ? 14 : 13,
+        stemLen: isTiny ? 78 : isMobile ? 78 : 82
+      };
+    }
+
+    function yFromStaffStep(staffStep) {
+      const layout = getStaffLayout();
+      const bottomLineY = layout.topY + 4 * layout.lineGap;
+      return bottomLineY - (staffStep - 2) * (layout.lineGap / 2);
+    }
+
+    function createSvgEl(tag, attrs = {}) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+      return el;
+    }
+
+    function drawStaff(note) {
+      if (!note) return;
+      staffSvg.innerHTML = '';
+      const layout = getStaffLayout();
+      const theme = getActiveTheme();
+      const noteClass = state.speedActive ? 'speed-glow' : '';
+      const defs = createSvgEl('defs');
+      const clefX = note.clef === 'treble' ? (layout.isTiny ? 172 : layout.isMobile ? 160 : 140) : (layout.isTiny ? 176 : layout.isMobile ? 168 : 150);
+      const clefY = note.clef === 'treble' ? layout.topY + 3 * layout.lineGap : layout.topY + 1 * layout.lineGap;
+      const clefWidth = note.clef === 'treble' ? 96 : 78;
+      const clefHeight = note.clef === 'treble' ? 168 : 124;
+      const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
+      const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
+
+      const headGradient = createSvgEl('linearGradient', { id: 'noteHeadGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+      headGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+      headGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
+      headGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+      defs.appendChild(headGradient);
+
+      const clefGradient = createSvgEl('linearGradient', {
+        id: 'noteClefGradient',
+        gradientUnits: 'userSpaceOnUse',
+        x1: clefX - clefWidth / 2,
+        y1: clefY - clefHeight / 2,
+        x2: clefX + clefWidth / 2,
+        y2: clefY + clefHeight / 2
+      });
+      clefGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+      clefGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
+      clefGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+      defs.appendChild(clefGradient);
+
+      const bevelGradient = createSvgEl('linearGradient', { id: 'noteBevelGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+      bevelGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': '#ffffff', 'stop-opacity': '0.24' }));
+      bevelGradient.appendChild(createSvgEl('stop', { offset: '40%', 'stop-color': '#ffffff', 'stop-opacity': '0.08' }));
+      bevelGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
+      defs.appendChild(bevelGradient);
+
+      staffSvg.appendChild(defs);
+
+      for (let i = 0; i < 5; i++) {
+        const y = layout.topY + i * layout.lineGap;
+        const line = createSvgEl('line', {
+          x1: layout.left,
+          y1: y,
+          x2: layout.right,
+          y2: y,
+          stroke: staffLineColor,
+          'stroke-width': 2,
+          'stroke-linecap': 'round'
+        });
+        if (noteClass) line.setAttribute('class', noteClass);
+        staffSvg.appendChild(line);
+      }
+
+      const clefShadow = createSvgEl('text', {
+        x: clefX + 3,
+        y: clefY + 3,
+        fill: 'rgba(0,0,0,0.18)',
+        'font-size': note.clef === 'treble' ? (layout.isTiny ? 144 : layout.isMobile ? 148 : 150) : (layout.isTiny ? 104 : layout.isMobile ? 106 : 110),
+        'font-family': 'Georgia, Times New Roman, serif',
+        'dominant-baseline': 'middle'
+      });
+      clefShadow.textContent = note.clef === 'treble' ? TREBLE_CLEF : BASS_CLEF;
+      if (noteClass) clefShadow.setAttribute('class', noteClass);
+      staffSvg.appendChild(clefShadow);
+
+      const clef = createSvgEl('text', {
+        x: clefX,
+        y: clefY,
+        fill: 'url(#noteClefGradient)',
+        'font-size': note.clef === 'treble' ? (layout.isTiny ? 144 : layout.isMobile ? 148 : 150) : (layout.isTiny ? 104 : layout.isMobile ? 106 : 110),
+        'font-family': 'Georgia, Times New Roman, serif',
+        'dominant-baseline': 'middle',
+        stroke: 'rgba(255,255,255,0.08)',
+        'stroke-width': '0.65',
+        'paint-order': 'stroke fill'
+      });
+      clef.textContent = note.clef === 'treble' ? TREBLE_CLEF : BASS_CLEF;
+      if (noteClass) clef.setAttribute('class', noteClass);
+      staffSvg.appendChild(clef);
+
+      const y = yFromStaffStep(note.staffStep);
+      const staffTop = layout.topY;
+      const staffBottom = layout.topY + 4 * layout.lineGap;
+      const ledgerYs = [];
+      if (y < staffTop) for (let ly = staffTop - layout.lineGap; ly >= y; ly -= layout.lineGap) ledgerYs.push(ly);
+      if (y > staffBottom) for (let ly = staffBottom + layout.lineGap; ly <= y; ly += layout.lineGap) ledgerYs.push(ly);
+
+      ledgerYs.forEach(ledgerY => {
+        const ledger = createSvgEl('line', {
+          x1: layout.noteX - layout.ledgerHalfWidth,
+          y1: ledgerY,
+          x2: layout.noteX + layout.ledgerHalfWidth,
+          y2: ledgerY,
+          stroke: ledgerLineColor,
+          'stroke-width': 2.5,
+          'stroke-linecap': 'round'
+        });
+        if (noteClass) ledger.setAttribute('class', noteClass);
+        staffSvg.appendChild(ledger);
+      });
+
+      const shadow = createSvgEl('ellipse', {
+        cx: layout.noteX + 2,
+        cy: y + 2,
+        rx: layout.noteRx + 1,
+        ry: layout.noteRy + 1,
+        transform: `rotate(-20 ${layout.noteX + 2} ${y + 2})`,
+        fill: 'rgba(0,0,0,0.18)'
+      });
+      if (noteClass) shadow.setAttribute('class', noteClass);
+
+      const head = createSvgEl('ellipse', {
+        cx: layout.noteX,
+        cy: y,
+        rx: layout.noteRx,
+        ry: layout.noteRy,
+        transform: `rotate(-20 ${layout.noteX} ${y})`,
+        fill: 'url(#noteHeadGradient)',
+        stroke: 'rgba(255,255,255,0.20)',
+        'stroke-width': 1.25
+      });
+      if (noteClass) head.setAttribute('class', noteClass);
+
+      const bevel = createSvgEl('ellipse', {
+        cx: layout.noteX - 4,
+        cy: y - 4,
+        rx: Math.max(7, layout.noteRx - 8),
+        ry: Math.max(4, layout.noteRy - 8),
+        transform: `rotate(-20 ${layout.noteX - 4} ${y - 4})`,
+        fill: 'url(#noteBevelGradient)',
+        opacity: '0.9'
+      });
+      if (noteClass) bevel.setAttribute('class', noteClass);
+
+      const stemUp = y > (layout.topY + layout.lineGap * 2.1);
+      const stemX = stemUp ? layout.noteX + 17 : layout.noteX - 17;
+      const stemY1 = stemUp ? y - 2 : y + 2;
+      const stemY2 = stemUp ? y - layout.stemLen : y + layout.stemLen;
+      const stemGradient = createSvgEl('linearGradient', {
+        id: 'noteStemGradient',
+        gradientUnits: 'userSpaceOnUse',
+        x1: stemX - 4,
+        y1: Math.min(stemY1, stemY2),
+        x2: stemX + 4,
+        y2: Math.max(stemY1, stemY2)
+      });
+      stemGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': mixHexColors(theme.accent2, '#ffffff', 0.25) }));
+      stemGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': mixHexColors(theme.accent, '#ffffff', 0.25) }));
+      stemGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': mixHexColors(theme.bg3, '#ffffff', 0.25) }));
+      defs.appendChild(stemGradient);
+
+      const stemShadow = createSvgEl('line', stemUp
+        ? { x1: layout.noteX + 18, y1: y - 1, x2: layout.noteX + 18, y2: y - layout.stemLen + 1 }
+        : { x1: layout.noteX - 16, y1: y + 3, x2: layout.noteX - 16, y2: y + layout.stemLen + 1 });
+      stemShadow.setAttribute('stroke', 'rgba(0,0,0,0.18)');
+      stemShadow.setAttribute('stroke-width', '3.5');
+      stemShadow.setAttribute('stroke-linecap', 'round');
+      if (noteClass) stemShadow.setAttribute('class', noteClass);
+
+      const stem = createSvgEl('line', stemUp
+        ? { x1: layout.noteX + 17, y1: y - 2, x2: layout.noteX + 17, y2: y - layout.stemLen }
+        : { x1: layout.noteX - 17, y1: y + 2, x2: layout.noteX - 17, y2: y + layout.stemLen });
+      stem.setAttribute('stroke', 'url(#noteStemGradient)');
+      stem.setAttribute('stroke-width', '3.15');
+      stem.setAttribute('stroke-linecap', 'round');
+      if (noteClass) stem.setAttribute('class', noteClass);
+
+      const stemOverlay = createSvgEl('line', stemUp
+        ? { x1: layout.noteX + 17.35, y1: y - 4, x2: layout.noteX + 17.35, y2: y - layout.stemLen + 4 }
+        : { x1: layout.noteX - 16.65, y1: y + 4, x2: layout.noteX - 16.65, y2: y + layout.stemLen - 4 });
+      stemOverlay.setAttribute('stroke', 'rgba(255,255,255,0.16)');
+      stemOverlay.setAttribute('stroke-width', '0.95');
+      stemOverlay.setAttribute('stroke-linecap', 'round');
+      if (noteClass) stemOverlay.setAttribute('class', noteClass);
+
+      staffSvg.appendChild(shadow);
+      staffSvg.appendChild(stemShadow);
+      staffSvg.appendChild(stem);
+      staffSvg.appendChild(stemOverlay);
+      staffSvg.appendChild(head);
+      staffSvg.appendChild(bevel);
+
+      if (!layout.isMobile) {
+        const badge = createSvgEl('g');
+        badge.appendChild(createSvgEl('rect', {
+          x: 634,
+          y: 36,
+          width: 148,
+          height: 34,
+          rx: 17,
+          fill: 'rgba(255,255,255,0.07)',
+          stroke: 'rgba(255,255,255,0.1)'
+        }));
+        const badgeText = createSvgEl('text', {
+          x: 708,
+          y: 58,
+          'text-anchor': 'middle',
+          fill: 'rgba(238,243,255,0.92)',
+          'font-size': 14,
+          'font-weight': 700
+        });
+        badgeText.textContent = note.clef === 'treble' ? 'Violinschluessel' : 'Bassschluessel';
+        badge.appendChild(badgeText);
+        staffSvg.appendChild(badge);
+      }
+    }
+
+    function getNoteVisualPoint(note) {
+      const layout = getStaffLayout();
+      return { x: layout.noteX, y: yFromStaffStep(note.staffStep) };
+    }
+
+    function spawnVectorBurst(kind = 'hit', note = state.current) {
+      if (!fxSvg) return;
+      const theme = getActiveTheme();
+      const point = note ? getNoteVisualPoint(note) : { x: 430, y: 250 };
+      const duration = kind === 'level' ? 920 : kind === 'speed' ? 620 : 420;
+      const baseRadius = kind === 'level' ? 18 : kind === 'speed' ? 14 : 11;
+      const rayCount = kind === 'level' ? 10 : kind === 'speed' ? 8 : 6;
+      const strokePrimary = kind === 'level' ? theme.accent2 : theme.accent;
+      const strokeSecondary = kind === 'level' ? theme.accent : theme.accent2;
+
+      const outer = createSvgEl('g', { transform: `translate(${point.x} ${point.y})` });
+      const burst = createSvgEl('g');
+      outer.appendChild(burst);
+
+      const ring = createSvgEl('circle', {
+        cx: 0,
+        cy: 0,
+        r: baseRadius,
+        fill: 'none',
+        stroke: strokePrimary,
+        'stroke-width': kind === 'level' ? 3 : 2.2,
+        opacity: '0.85'
+      });
+      ring.appendChild(createSvgEl('animate', { attributeName: 'r', from: String(baseRadius), to: String(baseRadius * 2.4), dur: `${duration}ms`, fill: 'freeze' }));
+      ring.appendChild(createSvgEl('animate', { attributeName: 'opacity', from: '0.85', to: '0', dur: `${duration}ms`, fill: 'freeze' }));
+      burst.appendChild(ring);
+
+      const inner = createSvgEl('circle', {
+        cx: 0,
+        cy: 0,
+        r: kind === 'level' ? 7 : 5,
+        fill: strokeSecondary,
+        opacity: '0.16'
+      });
+      inner.appendChild(createSvgEl('animate', { attributeName: 'r', from: kind === 'level' ? '7' : '5', to: kind === 'level' ? '18' : '12', dur: `${duration}ms`, fill: 'freeze' }));
+      inner.appendChild(createSvgEl('animate', { attributeName: 'opacity', from: '0.16', to: '0', dur: `${duration}ms`, fill: 'freeze' }));
+      burst.appendChild(inner);
+
+      for (let index = 0; index < rayCount; index++) {
+        const angle = (Math.PI * 2 * index) / rayCount;
+        const start = baseRadius * 0.7;
+        const end = baseRadius * (kind === 'level' ? 2.6 : 2.2);
+        const line = createSvgEl('line', {
+          x1: Math.cos(angle) * start,
+          y1: Math.sin(angle) * start,
+          x2: Math.cos(angle) * (start + 4),
+          y2: Math.sin(angle) * (start + 4),
+          stroke: index % 2 === 0 ? strokePrimary : strokeSecondary,
+          'stroke-width': kind === 'level' ? 2.4 : 1.8,
+          'stroke-linecap': 'round',
+          opacity: '0.8'
+        });
+        line.appendChild(createSvgEl('animate', { attributeName: 'x2', from: String(Math.cos(angle) * (start + 4)), to: String(Math.cos(angle) * end), dur: `${duration}ms`, fill: 'freeze' }));
+        line.appendChild(createSvgEl('animate', { attributeName: 'y2', from: String(Math.sin(angle) * (start + 4)), to: String(Math.sin(angle) * end), dur: `${duration}ms`, fill: 'freeze' }));
+        line.appendChild(createSvgEl('animate', { attributeName: 'opacity', from: '0.8', to: '0', dur: `${duration}ms`, fill: 'freeze' }));
+        burst.appendChild(line);
+      }
+
+      burst.appendChild(createSvgEl('animateTransform', {
+        attributeName: 'transform',
+        type: 'scale',
+        values: kind === 'level' ? '0.74;1.18' : '0.82;1.08',
+        dur: `${duration}ms`,
+        fill: 'freeze'
+      }));
+
+      fxSvg.appendChild(outer);
+      window.setTimeout(() => outer.remove(), duration + 80);
+    }
+
+    function drawCurrentState() {
+      if (state.current && !state.gameOver) drawStaff(state.current);
+    }
+
+    function ensureAudioContext() {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!state.audioCtx) state.audioCtx = new Ctx();
+      if (state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
+      return state.audioCtx;
+    }
+
+    function playTone(freq, duration, type, volume) {
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playSuccessSound(startDelayMs = 0) {
+      if (!state.audioEnabled) return;
+      scheduleAudio(startDelayMs, () => {
+        playTone(523.25, 0.08, 'triangle', 0.032);
+        setTimeout(() => playTone(659.25, 0.1, 'triangle', 0.028), 70);
+      });
+    }
+
+    function playErrorSound() {
+      if (!state.audioEnabled) return;
+      playTone(220, 0.1, 'sine', 0.024);
+      setTimeout(() => playTone(196, 0.12, 'sine', 0.02), 60);
+    }
+
+    function scheduleAudio(delayMs, callback) {
+      if (delayMs > 0) {
+        setTimeout(callback, delayMs);
+      } else {
+        callback();
+      }
+    }
+
+    function getSpeedStepFrequency(streak) {
+      const scale = [0, 2, 4, 5, 7, 9, 11];
+      const zeroBased = Math.max(0, streak - 1);
+      const octave = Math.floor(zeroBased / scale.length);
+      const degree = scale[zeroBased % scale.length];
+      const midi = octave <= 3
+        ? 72 + degree + octave * 12
+        : 72 + 36 + (zeroBased - scale.length * 4);
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function playSpeedStepSound(streak, tierLevel = 0, loopLevel = 0) {
+      if (!state.audioEnabled || streak <= 0) return;
+      const freq = getSpeedStepFrequency(streak);
+      const accent = Math.min(0.034, 0.024 + tierLevel * 0.0015 + Math.min(loopLevel, 4) * 0.001);
+      playTone(freq, 0.11, 'triangle', accent);
+      playTone(freq * 2, 0.05, 'sine', 0.008 + Math.min(loopLevel, 3) * 0.001);
+      if (streak % 7 === 0) {
+        setTimeout(() => playTone(freq * 1.5, 0.07, 'triangle', 0.012), 42);
+      }
+    }
+
+    function playLevelUpSound(startDelayMs = 0) {
+      if (!state.audioEnabled) return;
+      const run = [659.25, 784, 1046.5, 1318.5];
+      scheduleAudio(startDelayMs, () => {
+        run.forEach((freq, index) => {
+          setTimeout(() => {
+            playTone(freq, 0.18, 'triangle', 0.032);
+            playTone(freq * 2, 0.12, 'sine', 0.01);
+          }, index * 86);
+        });
+        setTimeout(() => playTone(1567.98, 0.32, 'triangle', 0.024), 330);
+      });
+    }
+
+    function playMissionClearSound(startDelayMs = 0) {
+      if (!state.audioEnabled) return;
+      scheduleAudio(startDelayMs, () => {
+        const run = [587.33, 783.99, 987.77, 1174.66];
+        run.forEach((freq, index) => {
+          setTimeout(() => {
+            playTone(freq, 0.12, 'triangle', 0.026);
+            playTone(freq * 1.5, 0.08, 'sine', 0.008);
+          }, index * 58);
+        });
+        setTimeout(() => playTone(1396.91, 0.18, 'triangle', 0.022), 250);
+      });
+    }
+
+    function playSpeedSound(tierLevel = 1, loopLevel = 0, startDelayMs = 0) {
+      if (!state.audioEnabled) return;
+      scheduleAudio(startDelayMs, () => {
+        const base = 820 + (tierLevel - 1) * 62 + Math.min(loopLevel, 10) * 26;
+        const intervals = [1, 1.25, 1.5, 1.78, 2.0, 2.38, 2.66];
+        const tones = Math.min(intervals.length, 3 + Math.min(loopLevel, 4));
+        for (let index = 0; index < tones; index++) {
+          setTimeout(() => {
+            playTone(base * intervals[index], index >= 4 ? 0.12 : 0.09, 'triangle', 0.028 - index * 0.002);
+            if (loopLevel >= 2 && index % 2 === 1) playTone(base * intervals[index] * 2, 0.06, 'sine', 0.007);
+          }, index * 58);
+        }
+        if (loopLevel > 0) {
+          setTimeout(() => playTone(base * 3, 0.18, 'triangle', 0.02), tones * 58);
+        }
+      });
+    }
+
+    function playGameOverSound() {
+      if (!state.audioEnabled) return;
+      playTone(260, 0.18, 'sine', 0.028);
+      setTimeout(() => playTone(220, 0.22, 'sine', 0.024), 140);
+      setTimeout(() => playTone(180, 0.34, 'sine', 0.022), 300);
+    }
+
+    function getMidiNoteNumber(note) {
+      return (note.octave + 1) * 12 + NOTE_TO_SEMITONE[note.name];
+    }
+
+    function playTargetPitch(note) {
+      if (!state.noteAudioMode || !note) return;
+      const midi = getMidiNoteNumber(note);
+      const freq = 440 * Math.pow(2, (midi - 69) / 12);
+      playTone(freq, 0.24, 'triangle', 0.03);
+    }
+
+    function recordSolveTime(note, elapsed) {
+      const stats = getOrCreateNoteStats(note);
+      stats.attempts += 1;
+      stats.totalTime += elapsed;
+      stats.averageTime = stats.totalTime / stats.attempts;
+      return stats.averageTime;
+    }
+
+    function getFastBonus(elapsed) {
+      if (elapsed <= 0.95) return state.boss.active ? 3 : 2;
+      if (elapsed <= 1.6) return state.boss.active ? 2 : 1;
+      return 0;
+    }
+
+    function getSpeedTierForStreak(streak) {
+      let currentTier = SPEED_TIERS[0];
+      for (const tier of SPEED_TIERS) {
+        if (streak >= tier.threshold) currentTier = tier;
+      }
+      return currentTier;
+    }
+
+    function getTopSpeedTier() {
+      return SPEED_TIERS[SPEED_TIERS.length - 1];
+    }
+
+    function getSpeedLoopForStreak(streak) {
+      const topTier = getTopSpeedTier();
+      if (streak < topTier.threshold) return 0;
+      return Math.floor((streak - topTier.threshold) / SPEED_LOOP_STEP);
+    }
+
+    function getCurrentSpeedTier() {
+      return SPEED_TIERS.find(tier => tier.level === state.speedTier) || SPEED_TIERS[0];
+    }
+
+    function getCurrentSpeedStatus() {
+      const tier = getCurrentSpeedTier();
+      const topTier = getTopSpeedTier();
+      const loop = state.speedLoop;
+      const chainXp = tier.level < topTier.level ? tier.fastChainXp : tier.fastChainXp + loop;
+      const label = tier.level === 0
+        ? tier.name
+        : tier.level < topTier.level
+          ? `${tier.name} +${chainXp}`
+          : loop > 0
+            ? `${tier.name} x${loop + 1} +${chainXp}`
+            : `${tier.name} +${chainXp}`;
+      return { tier, loop, chainXp, label };
+    }
+
+    function clearSpeedState(options = {}) {
+      state.speedStreak = 0;
+      state.speedTier = 0;
+      state.speedLoop = 0;
+      state.speedActive = false;
+      clearTimeout(state.speedTimer);
+      if (!options.silent) {
+        drawCurrentState();
+        updateStats();
+      }
+    }
+
+    function grantSpeedTierReward(tier) {
+      let rewardXp = tier.unlockXp;
+      let rewardLife = 0;
+      if (tier.lifeReward > 0) {
+        if (!state.survivalMode && state.lives < state.maxLives) {
+          rewardLife = tier.lifeReward;
+          state.lives = Math.min(state.maxLives, state.lives + rewardLife);
+        } else {
+          rewardXp += state.survivalMode ? 2 : 1;
+        }
+      }
+      state.xp += rewardXp;
+      state.fastBonusXp += rewardXp;
+      state.bestSpeedTier = Math.max(state.bestSpeedTier, tier.level);
+      playSpeedSound(tier.level, 0, state.audioPriorityDelayMs || 0);
+      spawnVectorBurst('speed');
+      return { rewardXp, rewardLife };
+    }
+
+    function grantSpeedLoopReward(loop) {
+      const rewardXp = 2 + Math.floor(loop / 2);
+      state.xp += rewardXp;
+      state.fastBonusXp += rewardXp;
+      state.bestSpeedLoop = Math.max(state.bestSpeedLoop, loop);
+      playSpeedSound(getTopSpeedTier().level, loop, state.audioPriorityDelayMs || 0);
+      spawnVectorBurst('speed');
+      return { rewardXp };
+    }
+
+    function updateSpeedChain(solveTime) {
+      if (solveTime >= 2) {
+        clearSpeedState({ silent: true });
+        return { chainXp: 0, tier: SPEED_TIERS[0], unlockedTiers: [], unlockedLoops: [], loop: 0 };
+      }
+
+      state.speedStreak += 1;
+      const nextTier = getSpeedTierForStreak(state.speedStreak);
+      const nextLoop = getSpeedLoopForStreak(state.speedStreak);
+      const unlockedTiers = [];
+      const unlockedLoops = [];
+      const topTier = getTopSpeedTier();
+
+      if (nextTier.level > state.speedTier) {
+        for (let level = state.speedTier + 1; level <= nextTier.level; level++) {
+          const tier = SPEED_TIERS.find(item => item.level === level);
+          const reward = grantSpeedTierReward(tier);
+          unlockedTiers.push({ tier, reward });
+        }
+      }
+
+      if (nextTier.level >= topTier.level && nextLoop > state.speedLoop) {
+        for (let loop = state.speedLoop + 1; loop <= nextLoop; loop++) {
+          const reward = grantSpeedLoopReward(loop);
+          unlockedLoops.push({ loop, reward });
+        }
+      }
+
+      state.speedTier = nextTier.level;
+      state.speedLoop = nextLoop;
+      state.speedActive = state.speedTier > 0;
+      state.bestSpeedTier = Math.max(state.bestSpeedTier, state.speedTier);
+      state.bestSpeedLoop = Math.max(state.bestSpeedLoop, state.speedLoop);
+      const chainXp = nextTier.level < topTier.level ? nextTier.fastChainXp : nextTier.fastChainXp + nextLoop;
+      return { chainXp, tier: nextTier, unlockedTiers, unlockedLoops, loop: nextLoop };
+    }
+
+    function getWeightedRandomNote(pool) {
+      const weighted = pool.map(note => {
+        const stats = getOrCreateNoteStats(note);
+        const mastery = ensureMastery(note.name).value;
+        const slowBias = stats.attempts === 0 ? 0.7 : stats.averageTime * getDifficultyMultiplier();
+        const masteryBias = ((100 - mastery) / 100) * 4.4 * getDifficultyMultiplier();
+        const wrongBias = (stats.wrong || 0) * 0.22;
+        return { note, weight: 1 + slowBias + masteryBias + wrongBias };
+      });
+      const total = weighted.reduce((sum, item) => sum + item.weight, 0);
+      let roll = Math.random() * total;
+      for (const item of weighted) {
+        roll -= item.weight;
+        if (roll <= 0) return item.note;
+      }
+      return weighted[weighted.length - 1].note;
+    }
+
+    function queueRevenge(note) {
+      const key = getNoteKey(note);
+      if (state.revengeQueue.some(item => item.key === key)) return;
+      state.revengeQueue.push({ key, note, dueRound: state.roundCount + 2 });
+      if (state.revengeQueue.length > 6) state.revengeQueue.shift();
+    }
+
+    function takeDueRevenge(pool) {
+      const poolKeys = new Set(pool.map(getNoteKey));
+      const index = state.revengeQueue.findIndex(item => item.dueRound <= state.roundCount && poolKeys.has(item.key));
+      if (index === -1) return null;
+      const [item] = state.revengeQueue.splice(index, 1);
+      return item.note;
+    }
+
+    function getBossDifficultyScore(note) {
+      const stats = getOrCreateNoteStats(note);
+      const mastery = ensureMastery(note.name).value;
+      return (stats.averageTime || 0.8) * 2.2 + ((100 - mastery) / 100) * 5.5 + (stats.wrong || 0) * 0.8;
+    }
+
+    function startBossRound() {
+      const pool = choosePool();
+      const ranked = [...pool].sort((a, b) => getBossDifficultyScore(b) - getBossDifficultyScore(a));
+      const total = state.survivalMode ? 3 : 4;
+      const sequence = [];
+      for (const note of ranked) {
+        if (sequence.some(item => getNoteKey(item) === getNoteKey(note))) continue;
+        sequence.push(note);
+        if (sequence.length >= total) break;
+      }
+      state.boss.active = true;
+      state.boss.level = state.level;
+      state.boss.sequence = sequence;
+      state.boss.index = 0;
+      showToast(`Boss Level ${state.level}`, `${sequence.length} harte Noten warten`, 'boss');
+      setFeedback('Boss-Runde: jetzt sitzen die Problemnoten.', 'good');
+      updateBossBanner();
+    }
+
+    function shouldStartBoss() {
+      return !state.gameOver
+        && !state.boss.active
+        && state.level % 5 === 0
+        && !state.boss.clearedLevels.includes(state.level)
+        && !state.boss.failedLevels.includes(state.level);
+    }
+
+    function resolveBossClear() {
+      const clearedLevel = state.boss.level;
+      state.boss.active = false;
+      state.boss.sequence = [];
+      state.boss.index = 0;
+      state.boss.clearedLevels.push(clearedLevel);
+      state.bossClears += 1;
+      if (!state.survivalMode && state.lives < state.maxLives) state.lives += 1;
+      state.xp += 2;
+      showToast('Boss clear', '+2 XP und ein Life-Boost', 'boss');
+      maybeUnlockThemes();
+    }
+
+    function resolveBossFailure() {
+      if (!state.boss.active) return;
+      state.boss.failedLevels.push(state.boss.level);
+      state.boss.active = false;
+      state.boss.sequence = [];
+      state.boss.index = 0;
+      showToast('Boss entwischt', 'Du siehst ihn spaeter wieder.', 'bad');
+    }
+
+    function buildMission(type) {
+      if (type === 'blitz') {
+        return {
+          type,
+          title: 'Blitzlauf',
+          description: '4 schnelle Treffer unter 1.6 Sekunden.',
+          target: 4,
+          progress: 0,
+          completed: false,
+          rewardLabel: '+2 XP',
+          reward: { type: 'xp', value: 2 }
+        };
+      }
+      if (type === 'combo') {
+        const target = state.level >= 4 ? 8 : 6;
+        return {
+          type,
+          title: 'Combo-Fenster',
+          description: `Bau eine Serie von ${target} richtigen Antworten.`,
+          target,
+          progress: Math.min(state.streak, target),
+          completed: false,
+          rewardLabel: '+3 XP',
+          reward: { type: 'xp', value: 3 }
+        };
+      }
+      if (type === 'clef') {
+        const clef = state.mode === 'mixed' ? (Math.random() > 0.5 ? 'treble' : 'bass') : state.mode;
+        return {
+          type,
+          title: clef === 'treble' ? 'Violin-Fokus' : 'Bass-Fokus',
+          description: `Triff 5 ${clef === 'treble' ? 'Violinschluessel' : 'Bassschluessel'}-Noten.`,
+          target: 5,
+          progress: 0,
+          completed: false,
+          clef,
+          rewardLabel: state.survivalMode ? '+2 XP' : '+1 Life',
+          reward: state.survivalMode ? { type: 'xp', value: 2 } : { type: 'life', value: 1 }
+        };
+      }
+      if (type === 'revenge') {
+        return {
+          type,
+          title: 'Weak Note Revenge',
+          description: 'Triff 2 Revanche-Noten, wenn sie wieder auftauchen.',
+          target: 2,
+          progress: 0,
+          completed: false,
+          rewardLabel: 'Weakest boost',
+          reward: { type: 'mastery', value: 12 }
+        };
+      }
+      if (type === 'steady') {
+        return {
+          type,
+          title: 'Ruhige Hand',
+          description: '7 Treffer ohne Fehler oder Skip.',
+          target: 7,
+          progress: 0,
+          completed: false,
+          rewardLabel: '+2 XP',
+          reward: { type: 'xp', value: 2 }
+        };
+      }
+      return {
+        type: 'perfect',
+        title: 'Perfect Round',
+        description: 'Schliesse dieses Level ohne Fehler oder Skip ab.',
+        target: xpNeeded(),
+        progress: state.xp,
+        completed: false,
+        level: state.level,
+        broken: false,
+        rewardLabel: '+4 XP',
+        reward: { type: 'xp', value: 4 }
+      };
+    }
+
+    function generateMission() {
+      const options = ['blitz', 'combo', 'clef', 'revenge', 'steady'];
+      if (state.level >= 2) options.push('perfect');
+      const previousType = state.mission ? state.mission.type : null;
+      const filtered = options.filter(type => type !== previousType);
+      const chosen = filtered[Math.floor(Math.random() * filtered.length)];
+      state.mission = buildMission(chosen);
+      renderMission();
+    }
+
+    function grantMissionReward(mission) {
+      if (mission.completed) return;
+      mission.completed = true;
+      if (mission.reward.type === 'xp') {
+        state.xp += mission.reward.value;
+      } else if (mission.reward.type === 'life') {
+        state.lives = Math.min(state.maxLives, state.lives + mission.reward.value);
+      } else if (mission.reward.type === 'mastery') {
+        adjustMastery(getWeakestNoteName(), mission.reward.value);
+      }
+      state.missionsCompleted += 1;
+      maybeUnlockThemes();
+      playMissionClearSound(state.audioPriorityDelayMs || 0);
+      showToast('Mission clear', `${mission.title} · ${mission.rewardLabel}`, 'good');
+      if (state.xp >= xpNeeded()) levelUp(state.audioPriorityDelayMs || 0);
+      generateMission();
+    }
+
+    function updateMission(eventName, meta = {}) {
+      if (!state.mission || state.mission.completed) return false;
+      const mission = state.mission;
+      if (mission.type === 'blitz') {
+        if (eventName === 'correct' && meta.solveTime <= 1.6) mission.progress = Math.min(mission.target, mission.progress + 1);
+      } else if (mission.type === 'combo') {
+        if (eventName === 'correct') mission.progress = Math.min(mission.target, state.streak);
+      } else if (mission.type === 'clef') {
+        if (eventName === 'correct' && meta.note && meta.note.clef === mission.clef) mission.progress = Math.min(mission.target, mission.progress + 1);
+      } else if (mission.type === 'revenge') {
+        if (eventName === 'correct' && meta.revenge) mission.progress = Math.min(mission.target, mission.progress + 1);
+      } else if (mission.type === 'steady') {
+        if (eventName === 'correct') mission.progress = Math.min(mission.target, mission.progress + 1);
+        if (eventName === 'wrong' || eventName === 'skip') mission.progress = 0;
+      } else if (mission.type === 'perfect') {
+        if (mission.level !== state.level) {
+          state.mission = buildMission('perfect');
+        } else if (eventName === 'correct') {
+          mission.progress = Math.min(mission.target, state.xp);
+        } else if (eventName === 'wrong' || eventName === 'skip') {
+          mission.broken = true;
+          mission.description = 'Perfect ist fuer dieses Level weg. Gleich die naechste Runde neu.';
+        } else if (eventName === 'level-up' && meta.perfect) {
+          mission.progress = mission.target;
+        } else if (eventName === 'level-up' && !meta.perfect) {
+          generateMission();
+          return true;
+        }
+      }
+      if (mission.progress >= mission.target) {
+        grantMissionReward(mission);
+        return true;
+      }
+      renderMission();
+      return false;
+    }
+
+    function levelUp(startDelayMs = state.audioPriorityDelayMs || 0) {
+      const wasPerfect = state.levelMistakes === 0 && state.levelSkips === 0;
+      state.level += 1;
+      state.xp = 0;
+      state.levelMistakes = 0;
+      state.levelSkips = 0;
+      applyTheme();
+      drawCurrentState();
+      playLevelUpSound(startDelayMs);
+      spawnVectorBurst('level');
+      vibrate([18, 20, 26]);
+      if (wasPerfect) {
+        state.perfectRounds += 1;
+        if (!state.survivalMode && state.lives < state.maxLives) state.lives += 1;
+        showToast('Perfect Round', 'Flawless Level und ein Life-Boost', 'perfect');
+      } else {
+        showToast(`Level ${state.level}`, 'Weiter, der Rhythmus stimmt.', 'good');
+      }
+      maybeUnlockThemes();
+      updateMission('level-up', { perfect: wasPerfect });
+      saveProgress();
+    }
+
+    function showGameOver() {
+      state.gameOver = true;
+      state.lastRunLevel = state.level;
+      state.lastRunStreak = state.bestStreak;
+      stopRoundTimer();
+      clearPendingRoundAdvance();
+      const bestSpeedLabel = state.bestSpeedTier < getTopSpeedTier().level
+        ? SPEED_TIERS[state.bestSpeedTier].name
+        : state.bestSpeedLoop > 0
+          ? `${getTopSpeedTier().name} x${state.bestSpeedLoop + 1}`
+          : getTopSpeedTier().name;
+      clearSpeedState({ silent: true });
+      drawCurrentState();
+      gameOverStats.textContent = `Level ${state.lastRunLevel} · Beste Serie ${state.lastRunStreak} · Speed ${bestSpeedLabel} · Fast XP ${state.fastBonusXp}`;
+      gameOverOverlay.classList.add('show');
+    }
+
+    function resetSessionState() {
+      clearPendingRoundAdvance();
+      state.level = 1;
+      state.xp = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.speedLoop = 0;
+      state.bestSpeedTier = 0;
+      state.bestSpeedLoop = 0;
+      state.fastBonusXp = 0;
+      state.lives = state.maxLives;
+      state.levelMistakes = 0;
+      state.levelSkips = 0;
+      state.roundCount = 0;
+      state.gameOver = false;
+      state.current = null;
+      state.currentFlags = { revenge: false, boss: false };
+      state.roundLocked = false;
+      state.revengeQueue = [];
+      state.boss.active = false;
+      state.boss.level = 0;
+      state.boss.sequence = [];
+      state.boss.index = 0;
+      clearSpeedState({ silent: true });
+      applyTheme();
+    }
+
+    function restartGame() {
+      resetSessionState();
+      gameOverOverlay.classList.remove('show');
+      generateMission();
+      updateStats();
+      nextRound(true);
+    }
+
+    function redrawIfNeeded() {
+      if (window.innerWidth === lastWindowWidth) return;
+      lastWindowWidth = window.innerWidth;
+      drawCurrentState();
+    }
+
+    function openMenu() {
+      settingsDrawer.classList.add('show');
+      settingsOverlay.classList.add('show');
+      settingsDrawer.setAttribute('aria-hidden', 'false');
+      menuToggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      settingsDrawer.classList.remove('show');
+      settingsOverlay.classList.remove('show');
+      settingsDrawer.setAttribute('aria-hidden', 'true');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    function setButtonsFromState() {
+      modeButtons.forEach(button => button.classList.toggle('active', button.dataset.mode === state.mode));
+      difficultyButtons.forEach(button => button.classList.toggle('active', button.dataset.difficulty === state.difficulty));
+      gameModeButtons.forEach(button => button.classList.toggle('active', button.dataset.gameMode === (state.survivalMode ? 'survival' : 'classic')));
+      audioToggle.checked = state.audioEnabled;
+      noteAudioToggle.checked = state.noteAudioMode;
+    }
+
+    function getPromptText() {
+      if (state.boss.active) return 'Boss-Runde: jetzt keine Schwachstelle verschenken.';
+      if (state.currentFlags.revenge) return 'Weak-note revenge: diese Note soll jetzt sitzen.';
+      if (state.noteAudioMode) return 'Sehen, hoeren, tippen.';
+      return 'Welche Note ist das?';
+    }
+
+    function pickNextNote(pool) {
+      if (state.boss.active) return { note: state.boss.sequence[state.boss.index], flags: { revenge: false, boss: true } };
+      const revenge = takeDueRevenge(pool);
+      if (revenge) return { note: revenge, flags: { revenge: true, boss: false } };
+      let next = getWeightedRandomNote(pool);
+      if (state.current && pool.length > 1) {
+        let guard = 0;
+        while (getNoteKey(next) === getNoteKey(state.current) && guard < 20) {
+          next = getWeightedRandomNote(pool);
+          guard += 1;
+        }
+      }
+      return { note: next, flags: { revenge: false, boss: false } };
+    }
+
+    function nextRound(resetFeedback = false) {
+      clearPendingRoundAdvance();
+      stopRoundTimer();
+      if (state.gameOver) return;
+      state.roundLocked = false;
+      state.roundCount += 1;
+      if (shouldStartBoss()) startBossRound();
+      const picked = pickNextNote(choosePool());
+      state.current = picked.note;
+      state.currentFlags = picked.flags;
+      drawStaff(state.current);
+      if (resetFeedback) setFeedback(getPromptText());
+      updateCurrentAverageTime();
+      startRoundTimer();
+      updateStats();
+      if (state.currentFlags.revenge) showToast('Revenge Note', `Noch einmal ${state.current.name} direkt packen.`, 'boss');
+      if (state.noteAudioMode) setTimeout(() => playTargetPitch(state.current), 30);
+    }
+
+    function skipCurrentRound() {
+      if (!state.current || state.gameOver || state.roundLocked) return;
+      clearPendingRoundAdvance();
+      stopRoundTimer();
+      state.streak = 0;
+      clearSpeedState({ silent: true });
+      state.levelSkips += 1;
+      updateMission('skip', { note: state.current, revenge: state.currentFlags.revenge });
+      if (state.boss.active) resolveBossFailure();
+      setFeedback('Uebersprungen. Perfect ist fuer dieses Level weg.', 'bad');
+      showToast('Skip', 'Weiter ohne Punktverlust, aber ohne Perfect.', 'bad');
+      vibrate(18);
+      updateStats();
+      nextRound(false);
+    }
+
+    function submitGuess(guess) {
+      if (!state.current || state.gameOver || state.roundLocked) return;
+      clearPendingRoundAdvance();
+      const solveTime = getElapsedSecondsCapped();
+      const targetNote = state.current;
+      if (guess === targetNote.name) {
+        recordSolveTime(targetNote, solveTime);
+        const isSpeedHit = solveTime < 2;
+        const nextSpeedStreak = isSpeedHit ? state.speedStreak + 1 : 0;
+        const nextSpeedTier = isSpeedHit ? getSpeedTierForStreak(nextSpeedStreak) : SPEED_TIERS[0];
+        const nextSpeedLoop = isSpeedHit ? getSpeedLoopForStreak(nextSpeedStreak) : 0;
+        state.audioPriorityDelayMs = isSpeedHit ? 170 : 0;
+        if (isSpeedHit) playSpeedStepSound(nextSpeedStreak, nextSpeedTier.level, nextSpeedLoop);
+        const baseFastBonus = getFastBonus(solveTime);
+        const speedResult = updateSpeedChain(solveTime);
+        const bonusXp = baseFastBonus + speedResult.chainXp;
+        recordMasteryHit(targetNote.name, solveTime);
+        stopRoundTimer();
+        timerCount.textContent = formatSeconds(solveTime);
+        state.xp += 1 + bonusXp;
+        state.fastBonusXp += bonusXp;
+        state.streak += 1;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+        flashAnswerButton(guess, 'good');
+        spawnVectorBurst('hit', targetNote);
+
+        const toastBits = [];
+        if (baseFastBonus > 0) toastBits.push(`Fast +${baseFastBonus} XP`);
+        if (speedResult.chainXp > 0) toastBits.push(`${speedResult.tier.name} +${speedResult.chainXp}`);
+        if (state.streak >= 10) toastBits.push(`Combo x${state.streak}`);
+        else if (state.streak >= 5) toastBits.push(`Serie x${state.streak}`);
+        if (state.currentFlags.revenge) toastBits.push('Revenge geknackt');
+        if (!isSpeedHit) playSuccessSound();
+        vibrate(12);
+        let priorityToastShown = updateMission('correct', { note: targetNote, solveTime, revenge: state.currentFlags.revenge });
+        if (speedResult.unlockedTiers.length > 0) {
+          const topUnlock = speedResult.unlockedTiers[speedResult.unlockedTiers.length - 1];
+          const rewardBits = [];
+          if (topUnlock.reward.rewardXp > 0) rewardBits.push(`+${topUnlock.reward.rewardXp} XP`);
+          if (topUnlock.reward.rewardLife > 0) rewardBits.push(`+${topUnlock.reward.rewardLife} Life`);
+          if (topUnlock.tier.fastChainXp > 0) rewardBits.push(`naechste Fast +${topUnlock.tier.fastChainXp}`);
+          showToast(`${topUnlock.tier.name}!`, `Speed x${state.speedStreak}${rewardBits.length ? ' · ' + rewardBits.join(' · ') : ''}`, 'perfect');
+          priorityToastShown = true;
+        }
+        if (speedResult.unlockedLoops.length > 0) {
+          const topLoop = speedResult.unlockedLoops[speedResult.unlockedLoops.length - 1];
+          const loopRewardBits = [`+${topLoop.reward.rewardXp} XP`, `naechste Fast +${speedResult.chainXp}`];
+          showToast(`Overdrive x${topLoop.loop + 1}!`, `Speed x${state.speedStreak} · ${loopRewardBits.join(' · ')}`, 'perfect');
+          priorityToastShown = true;
+        }
+        if (state.boss.active) {
+          state.boss.index += 1;
+          if (state.boss.index >= state.boss.sequence.length) {
+            resolveBossClear();
+            priorityToastShown = true;
+          }
+        }
+        if (state.xp >= xpNeeded()) {
+          levelUp();
+          priorityToastShown = true;
+        }
+        maybeUnlockThemes();
+        const message = toastBits.length ? toastBits.join(' · ') : 'Stark.';
+        setFeedback(message, 'good');
+        if (toastBits.length && !priorityToastShown) {
+          showToast(message, `${targetNote.name}${targetNote.octave} sitzt.`, state.boss.active ? 'boss' : 'good');
+        }
+        updateStats();
+        saveProgress();
+        state.audioPriorityDelayMs = 0;
+        state.roundLocked = true;
+        state.nextRoundTimeout = setTimeout(() => {
+          state.nextRoundTimeout = null;
+          if (!state.gameOver) nextRound(true);
+        }, 260);
+      } else {
+        state.audioPriorityDelayMs = 0;
+        const noteStats = getOrCreateNoteStats(targetNote);
+        noteStats.wrong += 1;
+        recordMasteryMiss(targetNote.name);
+        queueRevenge(targetNote);
+        state.streak = 0;
+        clearSpeedState({ silent: true });
+        state.levelMistakes += 1;
+        state.lives = Math.max(0, state.lives - 1);
+        playErrorSound();
+        vibrate([20, 24, 20]);
+        flashAnswerButton(guess, 'bad');
+        updateMission('wrong', { note: targetNote, revenge: state.currentFlags.revenge });
+        if (state.boss.active) resolveBossFailure();
+        setFeedback(`Nicht ganz. Es war ${targetNote.name}.`, 'bad');
+        showToast('Fast', `${targetNote.name}${targetNote.octave} kommt als Revenge zurueck.`, 'bad');
+        updateStats();
+        saveProgress();
+        if (state.lives === 0) {
+          playGameOverSound();
+          showGameOver();
+        }
+      }
+    }
+
+    function createAnswerButtons() {
+      answerGrid.innerHTML = '';
+      NOTE_ORDER.forEach(noteName => {
+        const button = document.createElement('button');
+        button.className = 'note-btn';
+        button.type = 'button';
+        button.textContent = noteName;
+        button.addEventListener('click', () => submitGuess(noteName));
+        answerGrid.appendChild(button);
+      });
+    }
+
+    function applyGameMode() {
+      state.maxLives = state.survivalMode ? 1 : 5;
+      state.lives = state.maxLives;
+      modePill.textContent = getModeLabel();
+    }
+
+    function runSelfTests() {
+      const snapshot = JSON.parse(JSON.stringify({
+        noteMastery: state.noteMastery,
+        noteStats: state.noteStats,
+        lives: state.lives,
+        maxLives: state.maxLives,
+        speedActive: state.speedActive,
+        speedStreak: state.speedStreak,
+        speedTier: state.speedTier,
+        speedLoop: state.speedLoop,
+        bestSpeedTier: state.bestSpeedTier,
+        bestSpeedLoop: state.bestSpeedLoop,
+        roundCount: state.roundCount,
+        mission: state.mission,
+        level: state.level,
+        xp: state.xp
+      }));
+      console.assert(xpNeeded(1) === 8, 'Level 1 should need 8 XP.');
+      console.assert(getDifficultyMultiplier() > 0, 'Difficulty multiplier should exist.');
+      console.assert(getNoteKey(TREBLE_NOTES[2]) === 'treble:C:4', 'Treble key should be stable.');
+      console.assert(BASS_NOTES.find(note => note.name === 'C' && note.octave === 4).staffStep === 12, 'Bass mapping should reach C4.');
+      console.assert(TREBLE_NOTES.find(note => note.name === 'C' && note.octave === 6).staffStep === 14, 'Treble mapping should reach C6.');
+      console.assert(getFastBonus(0.8) >= 2, 'Fast answers should grant bonus XP.');
+      console.assert(getSpeedTierForStreak(3).name === 'Spark', 'Speed tier 1 should unlock at 3.');
+      console.assert(getSpeedTierForStreak(12).name === 'Overdrive', 'Top speed tier should unlock at 12.');
+      console.assert(getSpeedLoopForStreak(12) === 0, 'Initial overdrive should still be loop 0.');
+      console.assert(getSpeedLoopForStreak(16) === 1, 'Overdrive loop should advance every 4 fast hits.');
+      state.noteMastery = {};
+      for (let index = 0; index < 12; index++) recordMasteryHit('C', 0.5);
+      console.assert(ensureMastery('C').value === 100, 'Mastery should hit 100 at 0.5s average with enough reps.');
+      state.noteMastery = {};
+      for (let index = 0; index < 12; index++) recordMasteryHit('C', 0.6);
+      console.assert(ensureMastery('C').value < 100, 'Mastery should stay below 100 above 0.5s average.');
+      state.noteMastery = snapshot.noteMastery;
+      state.noteStats = snapshot.noteStats;
+      state.lives = snapshot.lives;
+      state.maxLives = snapshot.maxLives;
+      state.speedActive = snapshot.speedActive;
+      state.speedStreak = snapshot.speedStreak;
+      state.speedTier = snapshot.speedTier;
+      state.speedLoop = snapshot.speedLoop;
+      state.bestSpeedTier = snapshot.bestSpeedTier;
+      state.bestSpeedLoop = snapshot.bestSpeedLoop;
+      state.roundCount = snapshot.roundCount;
+      state.mission = snapshot.mission;
+      state.level = snapshot.level;
+      state.xp = snapshot.xp;
+    }
+
+    modeButtons.forEach(button => button.addEventListener('click', () => {
+      state.mode = button.dataset.mode;
+      setButtonsFromState();
+      saveProgress();
+      nextRound(true);
+      if (window.innerWidth <= 760) closeMenu();
+    }));
+
+    difficultyButtons.forEach(button => button.addEventListener('click', () => {
+      state.difficulty = button.dataset.difficulty;
+      setButtonsFromState();
+      saveProgress();
+    }));
+
+    gameModeButtons.forEach(button => button.addEventListener('click', () => {
+      state.survivalMode = button.dataset.gameMode === 'survival';
+      applyGameMode();
+      setButtonsFromState();
+      saveProgress();
+      restartGame();
+      if (window.innerWidth <= 760) closeMenu();
+    }));
+
+    audioToggle.addEventListener('change', () => {
+      state.audioEnabled = audioToggle.checked;
+      ensureAudioContext();
+      saveProgress();
+    });
+
+    noteAudioToggle.addEventListener('change', () => {
+      state.noteAudioMode = noteAudioToggle.checked;
+      ensureAudioContext();
+      updateStats();
+      saveProgress();
+      if (state.noteAudioMode && state.current) playTargetPitch(state.current);
+    });
+
+    toneBtn.addEventListener('click', () => {
+      ensureAudioContext();
+      if (state.current) playTargetPitch(state.current);
+    });
+
+    menuToggle.addEventListener('click', openMenu);
+    menuClose.addEventListener('click', closeMenu);
+    settingsOverlay.addEventListener('click', closeMenu);
+    nextBtn.addEventListener('click', skipCurrentRound);
+
+    window.addEventListener('keydown', event => {
+      ensureAudioContext();
+      const key = event.key.toUpperCase();
+      if (NOTE_ORDER.includes(key)) submitGuess(key);
+    });
+
+    gameOverOverlay.addEventListener('click', restartGame);
+    gameOverOverlay.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        restartGame();
+      }
+    });
+
+    window.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeMenu();
+      if (event.key.toLowerCase() === 'n') skipCurrentRound();
+      if (event.key.toLowerCase() === 'p' && state.noteAudioMode && state.current) playTargetPitch(state.current);
+    });
+
+    window.addEventListener('resize', redrawIfNeeded);
+    window.addEventListener('resize', updateViewportUnit);
+    window.addEventListener('orientationchange', updateViewportUnit);
+
+    if (isTelegramBrowser || isEmbeddedWebView) document.body.classList.add('telegram-browser');
+    updateViewportUnit();
+    loadProgress();
+    applyGameMode();
+    setButtonsFromState();
+    applyTheme();
+    createAnswerButtons();
+    generateMission();
+    updateStats();
+    nextRound(true);
+
+    if (window.location.search.includes('selftest=1')) runSelfTests();
+  </script>
+</body>
+</html>
