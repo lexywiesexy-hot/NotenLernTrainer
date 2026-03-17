@@ -1459,7 +1459,8 @@
         yMin: -482,
         xMax: 1053,
         yMax: 1639,
-        anchorYOffset: 0
+        anchorXOffset: -10,
+        anchorYOffset: -70
       },
       bass: {
         path: 'M275 999Q285 1007 299 1013Q311 1018 328.5 1022.5Q346 1027 369 1027Q403 1027 429.5 1014.5Q456 1002 474.5 981Q493 960 503 932.5Q513 905 513 876Q513 841 499.5 812.5Q486 784 464 764Q442 744 414 733.5Q386 723 356 723Q311 723 265 745Q219 767 181.5 810Q144 853 120 916.5Q96 980 96 1062Q96 1171 133.5 1252Q171 1333 234.5 1385.5Q298 1438 381 1464Q464 1490 554 1490Q658 1490 744.5 1458.5Q831 1427 893.5 1364.5Q956 1302 990.5 1208Q1025 1114 1025 988Q1025 865 997.5 765Q970 665 922 585Q874 505 809.5 444Q745 383 672 338Q599 293 521 262.5Q443 232 367 214Q291 196 221.5 188Q152 180 96 180V318Q137 318 191.5 322.5Q246 327 307 340Q368 353 432 375Q496 397 557 432Q618 467 672 516Q726 565 767 632Q808 699 831.5 784.5Q855 870 855 978Q855 1083 830.5 1155Q806 1227 764.5 1271Q723 1315 668.5 1334Q614 1353 554 1353Q500 1353 448 1338Q396 1323 355.5 1289Q315 1255 290.5 1199Q266 1143 266 1062Q266 1048 267 1036.5Q268 1025 270 1017Q272 1007 275 999ZM1223 1024Q1177 1024 1144.5 1057Q1112 1090 1112 1136Q1112 1182 1144.5 1214Q1177 1246 1223 1246Q1270 1246 1303 1214Q1336 1182 1336 1136Q1336 1090 1303 1057Q1270 1024 1223 1024ZM1223 580Q1177 580 1144.5 613Q1112 646 1112 692Q1112 738 1144.5 771.5Q1177 805 1223 805Q1270 805 1303 771.5Q1336 738 1336 692Q1336 646 1303 613Q1270 580 1223 580Z',
@@ -1467,6 +1468,7 @@
         yMin: 180,
         xMax: 1336,
         yMax: 1490,
+        anchorXOffset: -8,
         anchorYOffset: 79
       }
     };
@@ -2473,7 +2475,7 @@
         const clefWidthBass = Math.round(78 * glyphScale);
         const clefHeightTreble = Math.round(168 * glyphScale);
         const clefHeightBass = Math.round(124 * glyphScale);
-        const clefYOffsetTreble = Math.round(-3 * glyphScale);
+        const clefYOffsetTreble = Math.round(-8 * glyphScale);
         const clefYOffsetBass = Math.round(-2 * glyphScale);
         const totalHeight = totalSteps * lineGap;
         const topExtraY = Math.round((500 - totalHeight) / 2);
@@ -2515,7 +2517,7 @@
         clefWidthBass: 78,
         clefHeightTreble: 168,
         clefHeightBass: 124,
-        clefYOffsetTreble: 0,
+        clefYOffsetTreble: -8,
         clefYOffsetBass: 0
       };
     }
@@ -2543,7 +2545,7 @@
       if (noteClass) el.setAttribute('class', noteClass);
     }
 
-    function appendClefVector(kind, x, y, width, height, noteClass = '') {
+    function appendClefVector(kind, x, y, width, height, defs, theme, noteClass = '') {
       const vector = CLEF_VECTORS[kind];
       if (!vector) return;
       const boxX = x - (width / 2);
@@ -2555,27 +2557,81 @@
       const scaledHeight = glyphHeight * scale;
       const padX = (width - scaledWidth) / 2;
       const padY = (height - scaledHeight) / 2;
-      const translateX = boxX + padX - (vector.xMin * scale);
+      const translateX = boxX + padX - (vector.xMin * scale) + ((vector.anchorXOffset || 0) * scale);
       const translateY = boxY + padY + (vector.yMax * scale) + ((vector.anchorYOffset || 0) * scale);
+      const gradientId = `noteClefGradient-${kind}`;
+      const highlightId = `noteClefHighlight-${kind}`;
+      const shadowFilterId = `noteClefShadow-${kind}`;
 
-      const buildPath = (dx, dy, fill, opacity = '1') => {
-        const path = createSvgEl('path', {
-          d: vector.path,
-          fill,
-          opacity,
-          transform: `translate(${(translateX + dx).toFixed(2)} ${(translateY + dy).toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})`
-        });
-        if (fill === 'url(#noteClefGradient)') {
-          path.setAttribute('stroke', 'rgba(255,255,255,0.08)');
-          path.setAttribute('stroke-width', Math.max(1, scale * 18).toFixed(2));
-          path.setAttribute('paint-order', 'stroke fill');
-        }
-        applySpeedGlow(path, noteClass);
-        return path;
-      };
+      const localGradient = createSvgEl('linearGradient', {
+        id: gradientId,
+        gradientUnits: 'userSpaceOnUse',
+        x1: vector.xMin,
+        y1: vector.yMax,
+        x2: vector.xMax,
+        y2: vector.yMin
+      });
+      localGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+      localGradient.appendChild(createSvgEl('stop', { offset: '38%', 'stop-color': mixHexColors(theme.accent2, theme.accent, 0.34) }));
+      localGradient.appendChild(createSvgEl('stop', { offset: '68%', 'stop-color': theme.accent }));
+      localGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+      defs.appendChild(localGradient);
 
-      staffSvg.appendChild(buildPath(3, 3, 'rgba(0,0,0,0.18)', '0.95'));
-      staffSvg.appendChild(buildPath(0, 0, 'url(#noteClefGradient)'));
+      const highlightGradient = createSvgEl('linearGradient', {
+        id: highlightId,
+        gradientUnits: 'userSpaceOnUse',
+        x1: vector.xMin,
+        y1: vector.yMin,
+        x2: vector.xMax,
+        y2: vector.yMax
+      });
+      highlightGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': '#ffffff', 'stop-opacity': '0.24' }));
+      highlightGradient.appendChild(createSvgEl('stop', { offset: '30%', 'stop-color': '#ffffff', 'stop-opacity': '0.1' }));
+      highlightGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
+      defs.appendChild(highlightGradient);
+
+      const shadowFilter = createSvgEl('filter', {
+        id: shadowFilterId,
+        x: '-30%',
+        y: '-30%',
+        width: '180%',
+        height: '180%'
+      });
+      shadowFilter.appendChild(createSvgEl('feDropShadow', {
+        dx: '2',
+        dy: '2',
+        stdDeviation: '2.2',
+        'flood-color': '#000000',
+        'flood-opacity': '0.2'
+      }));
+      defs.appendChild(shadowFilter);
+
+      const group = createSvgEl('g', {
+        transform: `translate(${translateX.toFixed(2)} ${translateY.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})`
+      });
+      applySpeedGlow(group, noteClass);
+
+      const shadow = createSvgEl('path', {
+        d: vector.path,
+        fill: 'rgba(0,0,0,0.16)',
+        opacity: '0.9',
+        transform: 'translate(3 3)',
+        filter: `url(#${shadowFilterId})`
+      });
+      const base = createSvgEl('path', {
+        d: vector.path,
+        fill: `url(#${gradientId})`
+      });
+      const highlight = createSvgEl('path', {
+        d: vector.path,
+        fill: `url(#${highlightId})`,
+        opacity: '0.9'
+      });
+
+      group.appendChild(shadow);
+      group.appendChild(base);
+      group.appendChild(highlight);
+      staffSvg.appendChild(group);
     }
 
     function drawStaff(note) {
@@ -2586,8 +2642,8 @@
       const noteClass = state.speedActive ? 'speed-glow' : '';
       const defs = createSvgEl('defs');
       const clefX = note.clef === 'treble'
-        ? (layout.isMobile ? layout.left + (layout.isTiny ? 42 : 46) : 140)
-        : (layout.isMobile ? layout.left + (layout.isTiny ? 46 : 50) : 150);
+        ? (layout.isMobile ? layout.left + (layout.isTiny ? 88 : 92) : 174)
+        : (layout.isMobile ? layout.left + (layout.isTiny ? 92 : 96) : 184);
       const clefY = note.clef === 'treble'
         ? layout.topY + 3 * layout.lineGap + layout.clefYOffsetTreble
         : layout.topY + 1 * layout.lineGap + layout.clefYOffsetBass;
@@ -2686,7 +2742,7 @@
         staffSvg.appendChild(line);
       }
 
-      appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, noteClass);
+      appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, defs, theme, noteClass);
 
       const y = yFromStaffStep(note.staffStep);
       const staffTop = layout.topY;
