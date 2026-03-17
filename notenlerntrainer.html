@@ -1335,6 +1335,8 @@
           <div class="menu-label">Audio</div>
           <label class="toggle-row"><span>FX-Sounds</span><input type="checkbox" id="audioToggle" checked></label>
           <label class="toggle-row"><span>Audiomodus</span><input type="checkbox" id="noteAudioToggle"></label>
+          <label class="toggle-row"><span>Popup-Messages</span><input type="checkbox" id="popupToggle" checked></label>
+          <button class="ghost-btn" id="audioTestBtn" type="button">Sound testen</button>
         </div>
 
         <div class="menu-section">
@@ -1567,6 +1569,8 @@
     const gameModeButtons = [...document.querySelectorAll('#gameModeButtons button')];
     const audioToggle = document.getElementById('audioToggle');
     const noteAudioToggle = document.getElementById('noteAudioToggle');
+    const popupToggle = document.getElementById('popupToggle');
+    const audioTestBtn = document.getElementById('audioTestBtn');
     const extraLedgerLinesSelect = document.getElementById('extraLedgerLinesSelect');
     const nextBtn = document.getElementById('nextBtn');
     const toneBtn = document.getElementById('toneBtn');
@@ -1648,6 +1652,7 @@
       roundLocked: false,
       audioPriorityDelayMs: 0,
       extraLedgerLines: 2,
+      popupsEnabled: true,
       audioUnlocked: false,
       lives: 5,
       maxLives: 5,
@@ -1795,6 +1800,7 @@
         difficulty: state.difficulty,
         audioEnabled: state.audioEnabled,
         noteAudioMode: state.noteAudioMode,
+        popupsEnabled: state.popupsEnabled,
         extraLedgerLines: state.extraLedgerLines,
         survivalMode: state.survivalMode,
         noteStats: state.noteStats,
@@ -1819,6 +1825,7 @@
         if (['easy', 'medium', 'hard'].includes(data.difficulty)) state.difficulty = data.difficulty;
         state.audioEnabled = data.audioEnabled !== false;
         state.noteAudioMode = data.noteAudioMode === true;
+        state.popupsEnabled = data.popupsEnabled !== false;
         state.extraLedgerLines = Number.isFinite(data.extraLedgerLines) ? clampNumber(Math.round(data.extraLedgerLines), 0, 5) : 2;
         state.survivalMode = data.survivalMode === true;
         state.noteStats = data.noteStats && typeof data.noteStats === 'object' ? data.noteStats : {};
@@ -2100,6 +2107,13 @@
     }
 
     function showToast(title, subtitle = '', variant = 'good') {
+      if (!state.popupsEnabled) {
+        if (window.innerWidth <= 760) {
+          const subtleMessage = subtitle || title;
+          setFeedback(subtleMessage, 'subtle');
+        }
+        return;
+      }
       if (window.innerWidth <= 760) {
         const subtleMessage = subtitle || title;
         setFeedback(subtleMessage, 'subtle');
@@ -2861,6 +2875,12 @@
       playTone(freq, 0.24, 'triangle', 0.03);
     }
 
+    function playAudioTestBeep() {
+      unlockAudio();
+      playTone(880, 0.14, 'triangle', 0.04);
+      setTimeout(() => playTone(1174.66, 0.16, 'triangle', 0.03), 120);
+    }
+
     function recordSolveTime(note, elapsed) {
       const stats = getOrCreateNoteStats(note);
       stats.attempts += 1;
@@ -3324,6 +3344,7 @@
       gameModeButtons.forEach(button => button.classList.toggle('active', button.dataset.gameMode === (state.survivalMode ? 'survival' : 'classic')));
       audioToggle.checked = state.audioEnabled;
       noteAudioToggle.checked = state.noteAudioMode;
+      popupToggle.checked = state.popupsEnabled;
       extraLedgerLinesSelect.value = String(state.extraLedgerLines);
     }
 
@@ -3589,6 +3610,16 @@
       updateStats();
       saveProgress();
       if (state.noteAudioMode && state.current) playTargetPitch(state.current);
+    });
+
+    popupToggle.addEventListener('change', () => {
+      state.popupsEnabled = popupToggle.checked;
+      saveProgress();
+    });
+
+    audioTestBtn.addEventListener('click', () => {
+      playAudioTestBeep();
+      setFeedback('Audio-Test gestartet.', 'subtle');
     });
 
     extraLedgerLinesSelect.addEventListener('change', () => {
