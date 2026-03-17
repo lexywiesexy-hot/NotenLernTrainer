@@ -2741,7 +2741,7 @@
       } catch (_) {}
     }
 
-    function createToneWaveUri(freq, duration, type = 'sine', volume = 0.03) {
+    function createToneWaveUri(freq, duration, type = 'sine', volume = 0.12) {
       const sampleRate = 22050;
       const frameCount = Math.max(1, Math.floor(sampleRate * duration));
       const pcmBytes = new Uint8Array(44 + frameCount * 2);
@@ -2943,8 +2943,8 @@
 
     function playAudioTestBeep() {
       unlockAudio();
-      playTone(880, 0.14, 'triangle', 0.04);
-      setTimeout(() => playTone(1174.66, 0.16, 'triangle', 0.03), 120);
+      playTone(880, 0.28, 'sine', 0.12);
+      setTimeout(() => playTone(1174.66, 0.32, 'sine', 0.1), 220);
     }
 
     function recordSolveTime(note, elapsed) {
