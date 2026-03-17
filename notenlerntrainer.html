@@ -1839,6 +1839,8 @@
       fallbackAudioPool: [],
       fallbackAudioCursor: 0,
       renderedLivesKey: '',
+      staffDefs: null,
+      staffStaticLayer: null,
       staffStaticKey: '',
       staffNoteLayer: null,
       audioPriorityLevel: 0,
@@ -2600,7 +2602,7 @@
       if (noteClass) el.setAttribute('class', noteClass);
     }
 
-    function appendClefVector(kind, x, y, width, height, defs, theme, noteClass = '') {
+    function appendClefVector(kind, x, y, width, height, defs, targetLayer, theme, noteClass = '') {
       const vector = CLEF_VECTORS[kind];
       if (!vector) return;
       const boxX = x - (width / 2);
@@ -2686,7 +2688,7 @@
       group.appendChild(shadow);
       group.appendChild(base);
       group.appendChild(highlight);
-      staffSvg.appendChild(group);
+      targetLayer.appendChild(group);
     }
 
     function drawStaff(note) {
@@ -2708,6 +2710,7 @@
         ? layout.clefHeightTreble
         : layout.clefHeightBass;
       updateStaffViewBox(note, layout);
+      const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
       const staticKey = JSON.stringify({
         clef: note.clef,
         mobile: layout.isMobile,
@@ -2726,9 +2729,10 @@
       if (state.staffStaticKey !== staticKey || !state.staffNoteLayer || !staffSvg.contains(state.staffNoteLayer)) {
         staffSvg.innerHTML = '';
         defs = createSvgEl('defs');
+        state.staffDefs = defs;
         state.staffStaticKey = staticKey;
+        state.staffStaticLayer = createSvgEl('g', { id: 'staffStaticLayer' });
         state.staffNoteLayer = createSvgEl('g', { id: 'staffNoteLayer' });
-      const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
 
         const headGradient = createSvgEl('linearGradient', { id: 'noteHeadGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
         headGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
@@ -2799,8 +2803,6 @@
         defs.appendChild(speedGlowFilter);
 
         staffSvg.appendChild(defs);
-
-        const staticLayer = createSvgEl('g', { id: 'staffStaticLayer' });
         for (let i = 0; i < 5; i++) {
           const y = layout.topY + i * layout.lineGap;
           const line = createSvgEl('line', {
@@ -2813,10 +2815,10 @@
             'stroke-linecap': 'round'
           });
           applySpeedGlow(line, noteClass);
-          staticLayer.appendChild(line);
+          state.staffStaticLayer.appendChild(line);
         }
 
-        appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, defs, theme, noteClass);
+        appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, defs, state.staffStaticLayer, theme, noteClass);
 
         if (!layout.isMobile) {
           const badge = createSvgEl('g');
@@ -2839,14 +2841,19 @@
           });
           badgeText.textContent = note.clef === 'treble' ? 'Violinschluessel' : 'Bassschluessel';
           badge.appendChild(badgeText);
-          staticLayer.appendChild(badge);
+          state.staffStaticLayer.appendChild(badge);
         }
 
-        staffSvg.appendChild(staticLayer);
+        staffSvg.appendChild(state.staffStaticLayer);
         staffSvg.appendChild(state.staffNoteLayer);
       }
+      defs = state.staffDefs;
 
       state.staffNoteLayer.innerHTML = '';
+      ['noteStemGradient'].forEach(id => {
+        const existing = defs.querySelector(`#${id}`);
+        if (existing) existing.remove();
+      });
       const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
       const y = yFromStaffStep(note.staffStep);
       const staffTop = layout.topY;
