@@ -398,6 +398,15 @@
       background: #14263a;
     }
 
+    .toggle-row select:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      filter: saturate(0.2);
+      background: rgba(255, 255, 255, 0.025);
+      color: rgba(239, 246, 255, 0.42);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
     .theme-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1666,9 +1675,9 @@
           treble: 'Violine',
           bass: 'Bass',
           mixed: 'Mix',
-          easy: 'Easy',
-          medium: 'Tuff',
-          hard: 'Ouch',
+          easy: 'Leicht',
+          medium: 'Mittel',
+          hard: 'Schwer',
           classic: 'Classic',
           survival: 'Survival',
           extraLedgerLines: 'Zusatz-Hilfslinien',
@@ -1696,7 +1705,7 @@
       feedback: {
         skip: 'Kann man mal machen.',
         wrongRevengeSuffix: 'Und nochmal.',
-        fallbackGood: 'Yes.'
+        fallbackGood: ['Yes', 'Ok', 'Gut', 'Sweet', 'Richtig', 'Korrekt', 'Das stimmt', 'Nicht falsch']
       },
       reactions: {
         revengeLines: [
@@ -2064,6 +2073,11 @@
       if (!reactions.length) return 'nice';
       const safeIndex = clampNumber(index, 0, reactions.length - 1);
       return reactions[safeIndex];
+    }
+
+    function getPositiveFeedbackLine() {
+      const lines = Array.isArray(WORDING.feedback?.fallbackGood) ? WORDING.feedback.fallbackGood : [WORDING.feedback?.fallbackGood || 'Yes'];
+      return lines[Math.floor(Math.random() * lines.length)] || 'Yes';
     }
 
     function getBestSpeedReaction() {
@@ -4626,7 +4640,7 @@
           priorityToastShown = true;
         }
         maybeUnlockThemes();
-        const message = toastBits.length ? toastBits.join(' · ') : WORDING.feedback.fallbackGood;
+        const message = toastBits.length ? toastBits.join(' · ') : getPositiveFeedbackLine();
         setFeedback(message, 'good');
         if (toastBits.length && !priorityToastShown) {
           showToast(message, `${formatNoteLabel(targetNote, true)} sitzt.`, state.boss.active ? 'boss' : 'good');
