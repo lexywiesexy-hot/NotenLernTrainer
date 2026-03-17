@@ -25,21 +25,21 @@ if errorlevel 1 (
     exit /b 1
 )
 
-pushd "%REPO%" >nul 2>nul
+call :enter_repo
 if errorlevel 1 (
     echo Could not enter repository:
     echo   %REPO%
     exit /b 1
 )
 
-for /f "delims=" %%I in ('%ComSpec% /d /c "cd /d "%REPO%" && git -c safe.directory=* branch --show-current 2^>nul"') do set "BRANCH=%%I"
+call :read_branch
 if not defined BRANCH (
     echo Could not determine the current branch.
     popd
     exit /b 1
 )
 
-for /f "delims=" %%I in ('%ComSpec% /d /c "cd /d "%REPO%" && git -c safe.directory=* rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2^>nul"') do set "UPSTREAM=%%I"
+call :read_upstream
 
 if defined UPSTREAM (
     for /f "tokens=1,* delims=/" %%A in ("%UPSTREAM%") do (
@@ -112,6 +112,27 @@ for /f "delims=" %%I in ('git -c safe.directory=* rev-parse --show-toplevel 2^>n
 popd
 if defined REPO exit /b 0
 exit /b 1
+
+:enter_repo
+pushd "%REPO%" >nul 2>nul || exit /b 1
+exit /b 0
+
+:read_branch
+set "BRANCH="
+set "BRANCH_FILE=%TEMP%\gitpushlatest-branch-%RANDOM%-%RANDOM%.txt"
+git -c safe.directory=* symbolic-ref --quiet --short HEAD > "%BRANCH_FILE%" 2>nul
+if exist "%BRANCH_FILE%" set /p BRANCH=<"%BRANCH_FILE%"
+if exist "%BRANCH_FILE%" del "%BRANCH_FILE%" >nul 2>nul
+if /I "%BRANCH%"=="HEAD" set "BRANCH="
+exit /b 0
+
+:read_upstream
+set "UPSTREAM="
+set "UPSTREAM_FILE=%TEMP%\gitpushlatest-upstream-%RANDOM%-%RANDOM%.txt"
+git -c safe.directory=* rev-parse --abbrev-ref --symbolic-full-name @{u} > "%UPSTREAM_FILE%" 2>nul
+if exist "%UPSTREAM_FILE%" set /p UPSTREAM=<"%UPSTREAM_FILE%"
+if exist "%UPSTREAM_FILE%" del "%UPSTREAM_FILE%" >nul 2>nul
+exit /b 0
 
 :run_git
 git -c safe.directory=* -C "%REPO%" %*
