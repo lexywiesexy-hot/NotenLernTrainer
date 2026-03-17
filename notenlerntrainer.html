@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lexy's Notenspass</title>
+  <title>Lexy's Notenspaß</title>
   <style>
     :root {
       --bg1: #07131f;
@@ -1371,7 +1371,7 @@
       <div class="brand">
         <div class="logo">&#9835;</div>
         <div class="brand-copy">
-          <div class="title">Lexy's Notenspass</div>
+          <div class="title">Lexy's Notenspaß</div>
           <div class="subtitle">Mehr Flow, mehr Revanche, mehr Mobile-Komfort.</div>
         </div>
       </div>
@@ -2861,9 +2861,9 @@
         height: '180%'
       });
       shadowFilter.appendChild(createSvgEl('feDropShadow', {
-        dx: '2',
-        dy: '2',
-        stdDeviation: '2.2',
+        dx: '11',
+        dy: '-11',
+        stdDeviation: '14',
         'flood-color': '#000000',
         'flood-opacity': '0.2'
       }));
@@ -2876,9 +2876,9 @@
 
       const shadow = createSvgEl('path', {
         d: vector.path,
-        fill: 'rgba(0,0,0,0.16)',
-        opacity: '0.9',
-        transform: 'translate(3 3)',
+        fill: 'rgba(0,0,0,0.24)',
+        opacity: '0.88',
+        transform: 'translate(17 -17)',
         filter: `url(#${shadowFilterId})`
       });
       const base = createSvgEl('path', {
@@ -3126,7 +3126,7 @@
       const accidentalX = layout.noteX - Math.round(layout.noteRx * 2.8);
       const accidentalFontSize = Math.max(50, Math.round(layout.noteRy * 4.55));
       const stemOffset = Math.round(layout.noteRx * 0.85);
-      const shadowOffset = Math.max(2, Math.round(layout.noteRx * 0.1));
+      const shadowOffset = Math.max(2, Math.round(layout.noteRx * 0.08));
       const bevelOffsetX = Math.round(layout.noteRx * 0.2);
       const bevelOffsetY = Math.round(layout.noteRy * 0.3);
       const noteHeadGradient = createSvgEl('linearGradient', {
