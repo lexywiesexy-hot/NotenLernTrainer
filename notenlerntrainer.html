@@ -797,6 +797,30 @@
       transform: translateY(0);
     }
 
+    .boss-counter {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(8, 14, 24, 0.66);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 247, 224, 0.92);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .boss-counter.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .combo-pop {
       margin-left: auto;
       max-width: min(290px, 78vw);
@@ -1155,6 +1179,13 @@
       .mobile-stat.bottom-right {
         bottom: 16px;
         right: 16px;
+      }
+
+      .boss-counter {
+        top: 54px;
+        right: 16px;
+        padding: 5px 9px;
+        font-size: 11px;
       }
 
       .stats {
@@ -1549,6 +1580,8 @@
             <div class="combo-subtitle" id="comboSubtitle"></div>
           </div>
         </div>
+
+        <div class="boss-counter" id="bossCounter" aria-live="polite"></div>
 
         <div class="mobile-staff-stats" aria-hidden="true">
           <div class="mobile-stat top-left">
@@ -1968,6 +2001,7 @@
     const avgTimeCount = document.getElementById('avgTimeCount');
     const timerCount = document.getElementById('timerCount');
     const bossBanner = document.getElementById('bossBanner');
+    const bossCounter = document.getElementById('bossCounter');
     const bossPill = document.getElementById('bossPill');
     const comboPop = document.getElementById('comboPop');
     const comboTitle = document.getElementById('comboTitle');
@@ -2656,23 +2690,31 @@
     }
 
     function updateBossBanner() {
+      if (!state.boss.active) {
+        if (bossCounter) {
+          bossCounter.textContent = '';
+          bossCounter.classList.remove('show');
+        }
+      }
       if (window.innerWidth <= 760) {
         bossBanner.textContent = '';
         bossBanner.classList.remove('show');
         bossPill.hidden = true;
-        return;
-      }
-      if (!state.boss.active) {
+      } else if (!state.boss.active) {
         bossBanner.textContent = '';
         bossBanner.classList.remove('show');
         bossPill.hidden = true;
-        return;
+      } else {
+        const remaining = state.boss.sequence.length - state.boss.index;
+        bossBanner.textContent = `Boss-Level ${state.boss.level} · ${remaining} Noten uebrig`;
+        bossBanner.classList.add('show');
+        bossPill.hidden = false;
+        bossPill.textContent = `Boss ${state.boss.index + 1}/${state.boss.sequence.length}`;
       }
+      if (!state.boss.active || !bossCounter) return;
       const remaining = state.boss.sequence.length - state.boss.index;
-      bossBanner.textContent = `Boss-Level ${state.boss.level} · ${remaining} Noten uebrig`;
-      bossBanner.classList.add('show');
-      bossPill.hidden = false;
-      bossPill.textContent = `Boss ${state.boss.index + 1}/${state.boss.sequence.length}`;
+      bossCounter.textContent = `${remaining}/${state.boss.sequence.length}`;
+      bossCounter.classList.add('show');
     }
 
     function renderMission() {
