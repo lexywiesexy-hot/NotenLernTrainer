@@ -304,6 +304,33 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    .menu-footer {
+      display: grid;
+      gap: 8px;
+      padding: 4px 2px 10px;
+      color: rgba(235, 242, 255, 0.5);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .menu-credit,
+    .menu-privacy {
+      margin: 0;
+    }
+
+    .menu-credit a,
+    .menu-privacy a {
+      color: rgba(245, 250, 255, 0.78);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .menu-credit a:hover,
+    .menu-privacy a:hover {
+      color: rgba(255, 255, 255, 0.92);
+      border-bottom-color: rgba(255, 255, 255, 0.28);
+    }
+
     .menu-label,
     .panel-label {
       font-size: 12px;
@@ -1465,6 +1492,11 @@
           <label class="toggle-row"><span>Popup-Messages</span><input type="checkbox" id="popupToggle" checked></label>
         </div>
 
+        <div class="menu-footer">
+          <p class="menu-credit">Made with 🎵 by <a href="https://open.spotify.com/artist/0WezPgzmy3wxf7RBhnNgDH?si=XXgQK0-rTCmpiaBmF2t_Sg" target="_blank" rel="noopener noreferrer">Lexy Hartmann</a></p>
+          <p class="menu-privacy">Datenschutz: Einstellungen, Highscore und lokaler Spielfortschritt werden nur in diesem Browser gespeichert.</p>
+        </div>
+
       </div>
     </aside>
 
@@ -2167,6 +2199,7 @@
         keySignatureId: state.keySignatureId,
         extraLedgerLines: state.extraLedgerLines,
         survivalMode: state.survivalMode,
+        bestStreak: state.bestStreak,
         noteStats: state.noteStats,
         noteMastery: state.noteMastery,
         unlockedThemes: state.unlockedThemes,
@@ -2215,6 +2248,7 @@
         if (KEY_SIGNATURES[data.keySignatureId]) state.keySignatureId = data.keySignatureId;
         state.extraLedgerLines = Number.isFinite(data.extraLedgerLines) ? clampNumber(Math.round(data.extraLedgerLines), 0, 5) : 2;
         state.survivalMode = data.survivalMode === true;
+        state.bestStreak = Number.isFinite(data.bestStreak) ? Math.max(0, Math.round(data.bestStreak)) : 0;
         state.noteStats = data.noteStats && typeof data.noteStats === 'object' ? data.noteStats : {};
         state.noteMastery = data.noteMastery && typeof data.noteMastery === 'object' ? data.noteMastery : {};
         if (Array.isArray(data.unlockedThemes) && data.unlockedThemes.length) {
