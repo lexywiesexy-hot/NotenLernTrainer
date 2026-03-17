@@ -472,6 +472,10 @@
       color: #fff2cc;
     }
 
+    [hidden] {
+      display: none !important;
+    }
+
     .pill.speed-pill.active {
       color: #fff;
       box-shadow: 0 0 28px rgba(var(--accent-rgb), 0.26);
@@ -889,7 +893,7 @@
       }
 
       .subtitle {
-        font-size: 11px;
+        display: none;
       }
 
       .top-actions {
@@ -899,8 +903,8 @@
       .ghost-btn,
       .burger-btn,
       .menu-close {
-        min-height: 42px;
-        padding: 10px 12px;
+        min-height: 40px;
+        padding: 9px 11px;
       }
 
       .icon-label {
@@ -912,20 +916,39 @@
         padding-inline: 11px;
       }
 
+      #toneBtn,
+      #nextBtn {
+        min-width: 42px;
+        padding-inline: 0;
+        justify-content: center;
+      }
+
+      #toneBtn span {
+        display: none;
+      }
+
+      #toneBtn::before {
+        content: '\266A';
+        font-size: 17px;
+        font-weight: 800;
+      }
+
       .card {
-        padding: 12px;
-        gap: 12px;
+        padding: 10px;
+        gap: 10px;
       }
 
       .stats-primary {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
         gap: 8px;
+        align-items: center;
       }
 
       .stats-secondary {
-        flex-wrap: nowrap;
-        overflow: auto;
-        padding-bottom: 2px;
-        scrollbar-width: none;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
       }
 
       .stats-secondary::-webkit-scrollbar,
@@ -933,21 +956,30 @@
         display: none;
       }
 
+      .stats-primary .mode-pill {
+        display: none;
+      }
+
+      .stats-primary .pill,
+      .stats-primary .lives-display {
+        min-width: 0;
+      }
+
       .stats-secondary .pill {
-        flex: 0 0 auto;
+        min-width: 0;
+        justify-content: center;
+        padding: 8px 10px;
+        min-height: 40px;
+        font-size: 12px;
+      }
+
+      .stats-secondary .pill:nth-child(3),
+      .stats-secondary .pill:nth-child(5) {
+        display: none;
       }
 
       .insight-row {
-        grid-auto-flow: column;
-        grid-template-columns: 88% 118%;
-        overflow: auto;
-        padding-bottom: 2px;
-        scrollbar-width: none;
-        scroll-snap-type: x proximity;
-      }
-
-      .insight-row > * {
-        scroll-snap-align: start;
+        display: none;
       }
 
       .mastery-grid {
@@ -955,18 +987,31 @@
       }
 
       .staff-wrap {
-        min-height: 318px;
-        padding: 8px 6px 6px;
+        min-height: clamp(390px, 54vh, 500px);
+        padding: 4px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #staffSvg,
+      #fxSvg {
+        width: 100%;
+        height: 100%;
+      }
+
+      .staff-hud {
+        inset: 10px 10px auto;
       }
 
       .combo-pop {
-        max-width: min(250px, 72vw);
-        padding: 9px 12px;
+        max-width: min(170px, 52vw);
+        padding: 8px 10px;
       }
 
       .feedback {
-        min-height: 24px;
-        font-size: 13px;
+        min-height: 18px;
+        font-size: 12px;
         text-align: center;
       }
 
@@ -980,8 +1025,8 @@
 
       .answer-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 8px;
-        padding: 10px;
+        gap: 7px;
+        padding: 8px;
         border-radius: 18px;
         background: rgba(8, 14, 24, 0.8);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -990,10 +1035,10 @@
       }
 
       .note-btn {
-        min-height: 58px;
+        min-height: 56px;
         padding: 12px 6px;
         border-radius: 14px;
-        font-size: 24px;
+        font-size: 22px;
       }
 
       .game-over-title {
@@ -1031,12 +1076,20 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      .stats-secondary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stats-secondary .pill.speed-pill {
+        grid-column: span 2;
+      }
+
       .lives-display {
         justify-content: center;
       }
 
       .staff-wrap {
-        min-height: 292px;
+        min-height: clamp(360px, 52vh, 460px);
       }
 
       .answer-grid {
@@ -1153,7 +1206,6 @@
           <div class="pill level-pill">Level <strong id="levelCount">1</strong></div>
           <div class="pill mode-pill" id="modePill">Classic</div>
           <div class="pill boss-pill" id="bossPill" hidden>Boss</div>
-          <div class="pill">Theme <strong id="themeName">Aurora</strong></div>
         </div>
 
         <div class="stats-secondary">
@@ -1162,8 +1214,6 @@
           <div class="pill">Beste <strong id="bestStreakCount">0</strong></div>
           <div class="pill speed-pill" id="speedPill">Blitz <strong id="speedCount">0</strong> <span id="speedTierLabel">Calm</span></div>
           <div class="pill">Fast XP <strong id="fastBonusCount">0</strong></div>
-          <div class="pill">Schnittzeit <strong id="avgTimeCount">-</strong></div>
-          <div class="pill">Aktuell <strong id="timerCount">0.0s</strong></div>
         </div>
       </div>
 
@@ -1831,7 +1881,7 @@
       root.setProperty('--accent-2-rgb', hexToRgbString(theme.accent2));
       root.setProperty('--good-rgb', hexToRgbString(theme.good));
       root.setProperty('--bad-rgb', hexToRgbString(theme.bad));
-      themeName.textContent = `${theme.name} · Level ${state.level}`;
+      if (themeName) themeName.textContent = `${theme.name} · Level ${state.level}`;
       renderThemeButtons();
     }
 
@@ -1932,13 +1982,14 @@
     function startRoundTimer() {
       stopRoundTimer();
       state.roundStartedAt = performance.now();
-      timerCount.textContent = '0.0s';
+      if (timerCount) timerCount.textContent = '0.0s';
       state.roundTimerInterval = window.setInterval(() => {
-        timerCount.textContent = formatSeconds(getElapsedSecondsCapped());
+        if (timerCount) timerCount.textContent = formatSeconds(getElapsedSecondsCapped());
       }, 100);
     }
 
     function updateCurrentAverageTime() {
+      if (!avgTimeCount) return;
       if (!state.current) {
         avgTimeCount.textContent = '-';
         return;
@@ -2031,16 +2082,35 @@
       return {
         isMobile,
         isTiny,
-        left: isTiny ? 168 : isMobile ? 156 : 110,
-        right: isTiny ? 690 : isMobile ? 704 : 790,
-        lineGap: isTiny ? 29 : isMobile ? 30 : 32,
-        topY: isTiny ? 130 : isMobile ? 134 : 158,
-        noteX: isTiny ? 474 : isMobile ? 478 : 470,
-        ledgerHalfWidth: 34,
-        noteRx: isTiny ? 23 : isMobile ? 22 : 20,
-        noteRy: isTiny ? 14.5 : isMobile ? 14 : 13,
-        stemLen: isTiny ? 78 : isMobile ? 78 : 82
+        left: isTiny ? 258 : isMobile ? 248 : 110,
+        right: isTiny ? 602 : isMobile ? 612 : 790,
+        lineGap: isTiny ? 33 : isMobile ? 35 : 32,
+        topY: isTiny ? 150 : isMobile ? 148 : 158,
+        noteX: isMobile ? 430 : 470,
+        ledgerHalfWidth: isMobile ? 30 : 34,
+        noteRx: isTiny ? 29 : isMobile ? 30 : 20,
+        noteRy: isTiny ? 18 : isMobile ? 18.5 : 13,
+        stemLen: isTiny ? 94 : isMobile ? 98 : 82
       };
+    }
+
+    function updateStaffViewBox(note, layout = getStaffLayout()) {
+      if (!layout.isMobile || !note) {
+        staffSvg.setAttribute('viewBox', '0 0 860 500');
+        fxSvg.setAttribute('viewBox', '0 0 860 500');
+        return;
+      }
+
+      const noteY = yFromStaffStep(note.staffStep);
+      const ledgerLines = getLedgerLineCount(note.staffStep);
+      const boxWidth = layout.isTiny ? 392 : 420;
+      const boxHeight = Math.min(layout.isTiny ? 416 : 430, (layout.isTiny ? 318 : 334) + ledgerLines * 18);
+      const x = clampNumber(layout.noteX - (boxWidth / 2), 0, 860 - boxWidth);
+      const centerY = clampNumber(noteY, (boxHeight / 2) + 22, 500 - (boxHeight / 2) - 18);
+      const y = clampNumber(centerY - (boxHeight / 2), 18, 500 - boxHeight - 10);
+      const viewBox = `${Math.round(x)} ${Math.round(y)} ${boxWidth} ${boxHeight}`;
+      staffSvg.setAttribute('viewBox', viewBox);
+      fxSvg.setAttribute('viewBox', viewBox);
     }
 
     function yFromStaffStep(staffStep) {
@@ -2062,10 +2132,13 @@
       const theme = getActiveTheme();
       const noteClass = state.speedActive ? 'speed-glow' : '';
       const defs = createSvgEl('defs');
-      const clefX = note.clef === 'treble' ? (layout.isTiny ? 172 : layout.isMobile ? 160 : 140) : (layout.isTiny ? 176 : layout.isMobile ? 168 : 150);
+      const clefX = note.clef === 'treble'
+        ? (layout.isMobile ? layout.left + (layout.isTiny ? 42 : 46) : 140)
+        : (layout.isMobile ? layout.left + (layout.isTiny ? 46 : 50) : 150);
       const clefY = note.clef === 'treble' ? layout.topY + 3 * layout.lineGap : layout.topY + 1 * layout.lineGap;
       const clefWidth = note.clef === 'treble' ? 96 : 78;
       const clefHeight = note.clef === 'treble' ? 168 : 124;
+      updateStaffViewBox(note, layout);
       const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
       const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
 
@@ -2115,7 +2188,7 @@
         x: clefX + 3,
         y: clefY + 3,
         fill: 'rgba(0,0,0,0.18)',
-        'font-size': note.clef === 'treble' ? (layout.isTiny ? 144 : layout.isMobile ? 148 : 150) : (layout.isTiny ? 104 : layout.isMobile ? 106 : 110),
+        'font-size': note.clef === 'treble' ? (layout.isTiny ? 118 : layout.isMobile ? 124 : 150) : (layout.isTiny ? 88 : layout.isMobile ? 92 : 110),
         'font-family': 'Georgia, Times New Roman, serif',
         'dominant-baseline': 'middle'
       });
@@ -2127,7 +2200,7 @@
         x: clefX,
         y: clefY,
         fill: 'url(#noteClefGradient)',
-        'font-size': note.clef === 'treble' ? (layout.isTiny ? 144 : layout.isMobile ? 148 : 150) : (layout.isTiny ? 104 : layout.isMobile ? 106 : 110),
+        'font-size': note.clef === 'treble' ? (layout.isTiny ? 118 : layout.isMobile ? 124 : 150) : (layout.isTiny ? 88 : layout.isMobile ? 92 : 110),
         'font-family': 'Georgia, Times New Roman, serif',
         'dominant-baseline': 'middle',
         stroke: 'rgba(255,255,255,0.08)',
@@ -3017,7 +3090,7 @@
         const bonusXp = baseFastBonus + speedResult.chainXp;
         recordMasteryHit(targetNote.name, solveTime);
         stopRoundTimer();
-        timerCount.textContent = formatSeconds(solveTime);
+        if (timerCount) timerCount.textContent = formatSeconds(solveTime);
         state.xp += 1 + bonusXp;
         state.fastBonusXp += bonusXp;
         state.streak += 1;

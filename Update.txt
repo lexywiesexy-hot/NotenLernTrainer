@@ -1,0 +1,3 @@
+git add notenlerntrainer.html
+git commit -m "Improve mobile layout and staff focus"
+git push
