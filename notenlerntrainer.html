@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notenlerntrainer</title>
+  <title>Lexy's Notenspass</title>
   <style>
     :root {
       --bg1: #07131f;
@@ -669,6 +669,64 @@
       z-index: 3;
     }
 
+    .mobile-staff-stats {
+      display: none;
+    }
+
+    .mobile-stat {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+      font-weight: 800;
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .mobile-stat.top-left {
+      top: 12px;
+      left: 12px;
+    }
+
+    .mobile-stat.top-right {
+      top: 12px;
+      right: 12px;
+      justify-content: flex-end;
+      text-align: right;
+    }
+
+    .mobile-stat.bottom-left {
+      bottom: 12px;
+      left: 12px;
+    }
+
+    .mobile-stat.bottom-right {
+      bottom: 12px;
+      right: 12px;
+      justify-content: flex-end;
+      text-align: right;
+    }
+
+    .mobile-stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mobile-stat-value {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .mobile-lives {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .boss-banner {
       padding: 8px 12px;
       border-radius: 999px;
@@ -949,21 +1007,49 @@
       }
 
       .card {
-        padding: 10px;
-        gap: 10px;
+        padding: 8px;
+        gap: 8px;
+      }
+
+      .stats {
+        display: none;
+      }
+
+      .mobile-staff-stats {
+        display: block;
+      }
+
+      .mobile-stat {
+        gap: 5px;
+      }
+
+      .mobile-stat-label {
+        font-size: 10px;
+      }
+
+      .mobile-stat-value {
+        font-size: 14px;
+      }
+
+      .mobile-lives .life-note {
+        font-size: 20px;
+      }
+
+      .stats {
+        gap: 6px;
       }
 
       .stats-primary {
         display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 8px;
+        grid-template-columns: 1fr auto;
+        gap: 4px;
         align-items: center;
       }
 
       .stats-secondary {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
       }
 
       .stats-secondary::-webkit-scrollbar,
@@ -975,19 +1061,50 @@
         display: none;
       }
 
+      .stats-primary .boss-pill {
+        display: none;
+      }
+
       .stats-primary .pill,
       .stats-primary .lives-display {
         min-width: 0;
+        min-height: 0;
+        padding: 0;
+        border-radius: 0;
+        font-size: 11px;
+        gap: 6px;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+
+      .stats-primary .pill strong,
+      .stats-secondary .pill strong {
+        font-size: 12px;
+      }
+
+      .stats-primary .lives-display {
+        padding-inline: 0;
+        gap: 8px;
+      }
+
+      .stats-primary .life-note {
+        font-size: 20px;
       }
 
       .stats-secondary .pill {
         min-width: 0;
         justify-content: center;
-        padding: 8px 10px;
-        min-height: 40px;
-        font-size: 12px;
+        padding: 0;
+        min-height: 0;
+        font-size: 10px;
+        border-radius: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
       }
 
+      .stats-secondary .pill:nth-child(2),
       .stats-secondary .pill:nth-child(3),
       .stats-secondary .pill:nth-child(5) {
         display: none;
@@ -1155,7 +1272,7 @@
       <div class="brand">
         <div class="logo">&#9835;</div>
         <div class="brand-copy">
-          <div class="title">Notenlerntrainer</div>
+          <div class="title">Lexy's Notenspass</div>
           <div class="subtitle">Mehr Flow, mehr Revanche, mehr Mobile-Komfort.</div>
         </div>
       </div>
@@ -1284,6 +1401,21 @@
           <div class="combo-pop" id="comboPop" aria-live="polite">
             <div class="combo-title" id="comboTitle"></div>
             <div class="combo-subtitle" id="comboSubtitle"></div>
+          </div>
+        </div>
+
+        <div class="mobile-staff-stats" aria-hidden="true">
+          <div class="mobile-stat top-left">
+            <div class="mobile-lives" id="mobileLivesDisplay"></div>
+          </div>
+          <div class="mobile-stat top-right">
+            <div><span class="mobile-stat-label">Level</span> <span class="mobile-stat-value" id="mobileLevelCount">1</span></div>
+          </div>
+          <div class="mobile-stat bottom-left">
+            <div><span class="mobile-stat-label">XP</span> <span class="mobile-stat-value" id="mobileXpCount">0/8</span></div>
+          </div>
+          <div class="mobile-stat bottom-right">
+            <div><span class="mobile-stat-label">Blitz</span> <span class="mobile-stat-value" id="mobileSpeedSummary">0 Calm</span></div>
           </div>
         </div>
 
@@ -1441,6 +1573,10 @@
     const feedbackEl = document.getElementById('feedback');
     const staffSvg = document.getElementById('staffSvg');
     const fxSvg = document.getElementById('fxSvg');
+    const mobileLivesDisplay = document.getElementById('mobileLivesDisplay');
+    const mobileLevelCount = document.getElementById('mobileLevelCount');
+    const mobileXpCount = document.getElementById('mobileXpCount');
+    const mobileSpeedSummary = document.getElementById('mobileSpeedSummary');
     const gameOverOverlay = document.getElementById('gameOverOverlay');
     const gameOverStats = document.getElementById('gameOverStats');
     const levelCount = document.getElementById('levelCount');
@@ -2031,12 +2167,14 @@
 
     function renderLives() {
       livesDisplay.innerHTML = '';
+      mobileLivesDisplay.innerHTML = '';
       for (let i = 0; i < state.maxLives; i++) {
         const life = document.createElement('span');
         life.className = `life-note${i >= state.lives ? ' lost' : ''}`;
         life.textContent = NOTE_ICON;
         life.setAttribute('aria-hidden', 'true');
         livesDisplay.appendChild(life);
+        mobileLivesDisplay.appendChild(life.cloneNode(true));
       }
     }
 
@@ -2094,6 +2232,9 @@
       speedCount.textContent = String(state.speedStreak);
       speedTierLabel.textContent = speedStatus.label;
       fastBonusCount.textContent = String(state.fastBonusXp);
+      mobileLevelCount.textContent = String(state.level);
+      mobileXpCount.textContent = `${state.xp}/${xpNeeded()}`;
+      mobileSpeedSummary.textContent = `${state.speedStreak} ${speedStatus.label}`;
       modePill.textContent = getModeLabel();
       renderLives();
       speedPill.classList.toggle('active', state.speedActive);

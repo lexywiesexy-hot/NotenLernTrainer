@@ -22,7 +22,19 @@ function sendFile(res, filePath) {
       '.json': 'application/json; charset=utf-8'
     };
 
-    res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream' });
+    const headers = {
+      'Content-Type': types[ext] || 'application/octet-stream'
+    };
+
+    // Force fresh HTML on Railway/mobile browsers so the single-file app does not get stuck on stale markup.
+    if (ext === '.html') {
+      headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate';
+      headers.Pragma = 'no-cache';
+      headers.Expires = '0';
+      headers.Surrogate-Control = 'no-store';
+    }
+
+    res.writeHead(200, headers);
     res.end(data);
   });
 }
