@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lexy's Notenspaß</title>
+  <title id="pageTitle">Lexy's Notenspaß</title>
   <style>
     :root {
       --bg1: #07131f;
@@ -1429,22 +1429,22 @@
       <div class="brand">
         <div class="logo">&#9835;</div>
         <div class="brand-copy">
-          <div class="title">Lexy's Notenspaß</div>
-          <div class="subtitle">Mehr Flow, mehr Revanche, mehr Mobile-Komfort.</div>
+          <div class="title" id="appTitleText">Lexy's Notenspaß</div>
+          <div class="subtitle" id="appSubtitleText">Mehr Flow, mehr Revanche, mehr Mobile-Komfort.</div>
         </div>
       </div>
 
       <div class="top-actions">
         <button class="ghost-btn icon-btn" id="toneBtn" aria-label="Zielton abspielen" title="Zielton abspielen">
-          <span>Ton</span>
+          <span id="toneBtnLabel">Ton</span>
         </button>
         <button class="ghost-btn" id="nextBtn">
-          <span class="icon-label">Ueberspringen</span>
+          <span class="icon-label" id="skipBtnLabel">Ueberspringen</span>
           <span aria-hidden="true">&#8618;</span>
         </button>
         <button class="burger-btn" id="menuToggle" aria-expanded="false" aria-controls="settingsDrawer">
           <span class="burger-icon"><span></span></span>
-          <span class="icon-label">Settings</span>
+          <span class="icon-label" id="settingsBtnLabel">Settings</span>
         </button>
       </div>
     </div>
@@ -1452,41 +1452,41 @@
     <div class="settings-overlay" id="settingsOverlay"></div>
     <aside class="settings-drawer" id="settingsDrawer" aria-hidden="true">
       <div class="menu-header">
-        <div class="menu-title">Einstellungen</div>
+        <div class="menu-title" id="menuTitleText">Einstellungen</div>
         <button class="menu-close" id="menuClose">Schliessen</button>
       </div>
 
       <div class="menu-body">
         <div class="menu-section">
-          <div class="menu-label">Schluessel</div>
+          <div class="menu-label" id="clefSectionLabel">Schluessel</div>
           <div class="segmented" id="modeButtons">
-            <button data-mode="treble" class="active">Violine</button>
-            <button data-mode="bass">Bass</button>
-            <button data-mode="mixed">Mix</button>
+            <button data-mode="treble" class="active" id="modeTrebleLabel">Violine</button>
+            <button data-mode="bass" id="modeBassLabel">Bass</button>
+            <button data-mode="mixed" id="modeMixedLabel">Mix</button>
           </div>
         </div>
 
         <div class="menu-section">
-          <div class="menu-label">Schwierigkeit</div>
+          <div class="menu-label" id="difficultySectionLabel">Schwierigkeit</div>
           <div class="segmented" id="difficultyButtons">
-            <button data-difficulty="easy" class="active">Easy</button>
-            <button data-difficulty="medium">Medium</button>
-            <button data-difficulty="hard">Hard</button>
+            <button data-difficulty="easy" class="active" id="difficultyEasyLabel">Easy</button>
+            <button data-difficulty="medium" id="difficultyMediumLabel">Medium</button>
+            <button data-difficulty="hard" id="difficultyHardLabel">Hard</button>
           </div>
         </div>
 
         <div class="menu-section">
-          <div class="menu-label">Spielmodus</div>
+          <div class="menu-label" id="gameModeSectionLabel">Spielmodus</div>
           <div class="segmented" id="gameModeButtons">
-            <button data-game-mode="classic" class="active">Classic</button>
-            <button data-game-mode="survival">Survival</button>
+            <button data-game-mode="classic" class="active" id="gameModeClassicLabel">Classic</button>
+            <button data-game-mode="survival" id="gameModeSurvivalLabel">Survival</button>
           </div>
         </div>
 
         <div class="menu-section">
-          <div class="menu-label">Notenumfang</div>
+          <div class="menu-label" id="rangeSectionLabel">Notenumfang</div>
           <label class="toggle-row">
-            <span>Zusatz-Hilfslinien</span>
+            <span id="extraLedgerLinesLabel">Zusatz-Hilfslinien</span>
             <select id="extraLedgerLinesSelect">
               <option value="0">0</option>
               <option value="1">1</option>
@@ -1496,10 +1496,10 @@
               <option value="5">5</option>
             </select>
           </label>
-          <label class="toggle-row"><span>Vorzeichen</span><input type="checkbox" id="accidentalsToggle"></label>
-          <label class="toggle-row"><span>Tonart-Modus</span><input type="checkbox" id="keySignatureToggle"></label>
+          <label class="toggle-row"><span id="accidentalsToggleLabel">Vorzeichen</span><input type="checkbox" id="accidentalsToggle"></label>
+          <label class="toggle-row"><span id="keySignatureToggleLabel">Tonart-Modus</span><input type="checkbox" id="keySignatureToggle"></label>
           <label class="toggle-row">
-            <span>Tonart</span>
+            <span id="keySignatureSelectLabel">Tonart</span>
             <select id="keySignatureSelect">
               <option value="none">C-Dur · 0 Vorzeichen</option>
               <option value="g_major">G-Dur · 1 Kreuz</option>
@@ -1517,15 +1517,15 @@
         </div>
 
         <div class="menu-section">
-          <div class="menu-label">Audio</div>
-          <label class="toggle-row"><span>FX-Sounds</span><input type="checkbox" id="audioToggle" checked></label>
-          <label class="toggle-row"><span>Audiomodus</span><input type="checkbox" id="noteAudioToggle"></label>
-          <label class="toggle-row"><span>Popup-Messages</span><input type="checkbox" id="popupToggle" checked></label>
+          <div class="menu-label" id="audioSectionLabel">Audio</div>
+          <label class="toggle-row"><span id="audioToggleLabel">FX-Sounds</span><input type="checkbox" id="audioToggle" checked></label>
+          <label class="toggle-row"><span id="noteAudioToggleLabel">Audiomodus</span><input type="checkbox" id="noteAudioToggle"></label>
+          <label class="toggle-row"><span id="popupToggleLabel">Popup-Messages</span><input type="checkbox" id="popupToggle" checked></label>
         </div>
 
         <div class="menu-footer">
-          <p class="menu-credit">Made with 🎵 by <a href="https://open.spotify.com/artist/0WezPgzmy3wxf7RBhnNgDH?si=XXgQK0-rTCmpiaBmF2t_Sg" target="_blank" rel="noopener noreferrer">Lexy Hartmann</a></p>
-          <p class="menu-privacy">Datenschutz: Einstellungen, Highscore und lokaler Spielfortschritt werden nur in diesem Browser gespeichert.</p>
+          <p class="menu-credit" id="menuCreditText">Made with 🎵 by <a href="https://open.spotify.com/artist/0WezPgzmy3wxf7RBhnNgDH?si=XXgQK0-rTCmpiaBmF2t_Sg" target="_blank" rel="noopener noreferrer">Lexy Hartmann</a></p>
+          <p class="menu-privacy" id="menuPrivacyText">Datenschutz: Einstellungen, Highscore und lokaler Spielfortschritt werden nur in diesem Browser gespeichert.</p>
         </div>
 
       </div>
@@ -1552,7 +1552,7 @@
       <div class="insight-row">
         <section class="mission-card">
           <div class="panel-head">
-            <div class="panel-label">Mini-Mission</div>
+            <div class="panel-label" id="missionPanelLabel">Mini-Mission</div>
             <div class="mission-reward" id="missionReward">+2 XP</div>
           </div>
           <div class="mission-title" id="missionTitle">Start klar machen</div>
@@ -1565,7 +1565,7 @@
 
         <section class="mastery-panel">
           <div class="panel-head">
-            <div class="panel-label">Mastery</div>
+            <div class="panel-label" id="masteryPanelLabel">Mastery</div>
             <div class="mastery-summary" id="masterySummary">Weakest: C</div>
           </div>
           <div class="mastery-grid" id="masteryGrid"></div>
@@ -1588,13 +1588,13 @@
             <div class="mobile-lives" id="mobileLivesDisplay"></div>
           </div>
           <div class="mobile-stat top-right">
-            <div><span class="mobile-stat-label">Level</span> <span class="mobile-stat-value" id="mobileLevelCount">1</span></div>
+            <div><span class="mobile-stat-label" id="mobileLevelLabel">Level</span> <span class="mobile-stat-value" id="mobileLevelCount">1</span></div>
           </div>
           <div class="mobile-stat bottom-left">
-            <div><span class="mobile-stat-label">XP</span> <span class="mobile-stat-value" id="mobileXpCount">0/8</span></div>
+            <div><span class="mobile-stat-label" id="mobileXpLabel">XP</span> <span class="mobile-stat-value" id="mobileXpCount">0/8</span></div>
           </div>
           <div class="mobile-stat bottom-right">
-            <div><span class="mobile-stat-label">Blitz</span> <span class="mobile-stat-value" id="mobileSpeedSummary">0 Calm</span></div>
+            <div><span class="mobile-stat-label" id="mobileSpeedLabel">Blitz</span> <span class="mobile-stat-value" id="mobileSpeedSummary">0 Calm</span></div>
           </div>
         </div>
 
@@ -1603,9 +1603,9 @@
 
         <div class="game-over-overlay" id="gameOverOverlay" role="button" tabindex="0" aria-label="Neustart">
           <div class="game-over-panel">
-            <div class="game-over-title">Game Over</div>
+            <div class="game-over-title" id="gameOverTitleText">Game Over</div>
             <div class="game-over-sub" id="gameOverStats">Level 1 · Serie 0</div>
-            <div class="game-over-hint">Antippen und direkt weiter.</div>
+            <div class="game-over-hint" id="gameOverHintText">Antippen und direkt weiter.</div>
           </div>
         </div>
       </div>
@@ -1645,6 +1645,108 @@
     const BASS_KEY_SIGNATURE_STEPS = {
       sharp: [8, 5, 9, 6, 3],
       flat: [4, 7, 3, 6, 2]
+    };
+    const WORDING = {
+      ui: {
+        pageTitle: "Lexy's Notenspaß",
+        appTitle: "Lexy's Notenspaß",
+        appTitleBoss: 'Endgegner 💀',
+        subtitle: 'Bockt und Hilft.',
+        toneButton: 'Ton',
+        skipButton: 'Überspringen',
+        settingsButton: 'Settings',
+        menuTitle: 'Einstellungen',
+        menuClose: 'Schliessen',
+        sections: {
+          clef: 'Schluessel',
+          difficulty: 'Schwierigkeit',
+          gameMode: 'Spielmodus',
+          range: 'Notenumfang',
+          audio: 'Audio',
+          mission: 'Mini-Mission',
+          mastery: 'Mastery'
+        },
+        labels: {
+          treble: 'Violine',
+          bass: 'Bass',
+          mixed: 'Mix',
+          easy: 'Easy',
+          medium: 'Tuff',
+          hard: 'Ouch',
+          classic: 'Classic',
+          survival: 'Survival',
+          extraLedgerLines: 'Zusatz-Hilfslinien',
+          accidentals: 'Vorzeichen',
+          keySignatureMode: 'Tonart-Modus',
+          keySignature: 'Tonart',
+          fxSounds: 'FX-Sounds',
+          noteAudio: 'Audiomodus',
+          popups: 'Popup-Messages',
+          level: 'Level',
+          xp: 'XP',
+          speed: 'Blitz'
+        },
+        footerCredit: 'Made with 🎵 by <a href="https://open.spotify.com/artist/0WezPgzmy3wxf7RBhnNgDH?si=XXgQK0-rTCmpiaBmF2t_Sg" target="_blank" rel="noopener noreferrer">Lexy Hartmann</a>',
+        footerPrivacy: 'Datenschutz: Einstellungen, Highscore und lokaler Spielfortschritt werden nur in diesem Browser gespeichert.',
+        gameOverTitle: 'Game Over',
+        gameOverHint: 'Antippen und direkt weiter.'
+      },
+      prompts: {
+        default: 'Welche Note ist das?',
+        accidentals: 'Welche Note ist das?',
+        audioMode: 'Sehen, hören, tippen.',
+        boss: 'Bittesehr: Deine persönlichen Schwachstellen.'
+      },
+      feedback: {
+        skip: 'Kann man mal machen.',
+        wrongRevengeSuffix: 'Und nochmal.',
+        fallbackGood: 'Tuff.'
+      },
+      reactions: {
+        revengeLines: [
+          'Und das war nochmal..',
+          'Ah ja genau, der.',
+          'Ah ja genau, die.',
+          'Uhm..',
+          'Ich glaub an dich.'
+        ],
+        ladderReactions: [
+          'nice',
+          'yeah',
+          'wow',
+          'sheesh',
+          'damn',
+          'sick',
+          'wtf',
+          'bruh',
+          'yoooo',
+          'deegah',
+          'hoer mir auf!',
+          'Chopin oder was?',
+          '👑',
+          '✨👑✨',
+          '💎'
+        ]
+      },
+      toasts: {
+        revengeTitle: 'Revenge!',
+        skipTitle: 'Skip',
+        skipSubtitle: 'Weiter ohne Punktverlust, aber ohne Perfect.',
+        wrongTitle: 'Fast',
+        bossStartTitle: 'Boss Level',
+        bossStartSuffix: 'harte Noten warten',
+        bossClearTitle: 'Boss clear',
+        bossClearSubtitle: '+2 XP und ein Life-Boost',
+        bossFailTitle: 'Ooops',
+        bossFailSubtitle: 'Die ist im Recall.',
+        missionClearTitle: 'Mission clear!',
+        perfectRoundTitle: 'Perfect Round',
+        perfectRoundSubtitle: 'Flawless Level und ein Life-Boost',
+        levelSubtitle: 'Go, go, go.'
+      },
+      stats: {
+        weakestPrefix: 'Weakest:'
+      }
     };
     const NOTE_ICON = '\u266A';
     const TREBLE_CLEF = '\uD834\uDD1E';
@@ -1952,6 +2054,68 @@
 
     function formatNoteLabel(note, includeOctave = false) {
       return `${getDisplayNoteName(note)}${includeOctave ? note.octave : ''}`;
+    }
+
+    function getRevengeLine() {
+      const lines = WORDING.reactions?.revengeLines || [];
+      return lines[Math.floor(Math.random() * lines.length)] || 'Und das war nochmal..';
+    }
+
+    function getLadderReaction(index) {
+      const reactions = WORDING.reactions?.ladderReactions || [];
+      if (!reactions.length) return 'nice';
+      const safeIndex = clampNumber(index, 0, reactions.length - 1);
+      return reactions[safeIndex];
+    }
+
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function setHtml(id, html) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    }
+
+    function applyStaticWording() {
+      document.title = WORDING.ui.pageTitle;
+      setText('appTitleText', WORDING.ui.appTitle);
+      setText('appSubtitleText', WORDING.ui.subtitle);
+      setText('toneBtnLabel', WORDING.ui.toneButton);
+      setText('skipBtnLabel', WORDING.ui.skipButton);
+      setText('settingsBtnLabel', WORDING.ui.settingsButton);
+      setText('menuTitleText', WORDING.ui.menuTitle);
+      setText('menuClose', WORDING.ui.menuClose);
+      setText('clefSectionLabel', WORDING.ui.sections.clef);
+      setText('modeTrebleLabel', WORDING.ui.labels.treble);
+      setText('modeBassLabel', WORDING.ui.labels.bass);
+      setText('modeMixedLabel', WORDING.ui.labels.mixed);
+      setText('difficultySectionLabel', WORDING.ui.sections.difficulty);
+      setText('difficultyEasyLabel', WORDING.ui.labels.easy);
+      setText('difficultyMediumLabel', WORDING.ui.labels.medium);
+      setText('difficultyHardLabel', WORDING.ui.labels.hard);
+      setText('gameModeSectionLabel', WORDING.ui.sections.gameMode);
+      setText('gameModeClassicLabel', WORDING.ui.labels.classic);
+      setText('gameModeSurvivalLabel', WORDING.ui.labels.survival);
+      setText('rangeSectionLabel', WORDING.ui.sections.range);
+      setText('extraLedgerLinesLabel', WORDING.ui.labels.extraLedgerLines);
+      setText('accidentalsToggleLabel', WORDING.ui.labels.accidentals);
+      setText('keySignatureToggleLabel', WORDING.ui.labels.keySignatureMode);
+      setText('keySignatureSelectLabel', WORDING.ui.labels.keySignature);
+      setText('audioSectionLabel', WORDING.ui.sections.audio);
+      setText('audioToggleLabel', WORDING.ui.labels.fxSounds);
+      setText('noteAudioToggleLabel', WORDING.ui.labels.noteAudio);
+      setText('popupToggleLabel', WORDING.ui.labels.popups);
+      setHtml('menuCreditText', WORDING.ui.footerCredit);
+      setText('menuPrivacyText', WORDING.ui.footerPrivacy);
+      setText('missionPanelLabel', WORDING.ui.sections.mission);
+      setText('masteryPanelLabel', WORDING.ui.sections.mastery);
+      setText('mobileLevelLabel', WORDING.ui.labels.level);
+      setText('mobileXpLabel', WORDING.ui.labels.xp);
+      setText('mobileSpeedLabel', WORDING.ui.labels.speed);
+      setText('gameOverTitleText', WORDING.ui.gameOverTitle);
+      setText('gameOverHintText', WORDING.ui.gameOverHint);
     }
 
     function withRandomAccidental(note) {
@@ -2575,7 +2739,7 @@
         else mainCard.removeAttribute('style');
       }
       if (themeName) themeName.textContent = `${baseTheme.name}${state.boss.active ? ' · Boss' : ''} · Level ${state.level}`;
-      if (appTitle) appTitle.textContent = state.boss.active ? 'Endgegnerrr 💀' : 'Lexy\'s Notenspaß';
+      if (appTitle) appTitle.textContent = state.boss.active ? WORDING.ui.appTitleBoss : WORDING.ui.appTitle;
     }
 
     function showToast(title, subtitle = '', variant = 'good') {
@@ -2730,7 +2894,7 @@
     function renderMastery() {
       masteryGrid.innerHTML = '';
       const weakest = getWeakestNoteName();
-      masterySummary.textContent = `Weakest: ${weakest} · Avg ${getAverageMastery()}% · 100 bei <=0.5s`;
+      masterySummary.textContent = `${WORDING.stats.weakestPrefix} ${weakest} · Avg ${getAverageMastery()}% · 100 bei <=0.5s`;
       for (const noteName of NOTE_ORDER) {
         const masteryState = ensureMastery(noteName);
         const mastery = masteryState.value;
@@ -4112,7 +4276,7 @@
       state.missionsCompleted += 1;
       maybeUnlockThemes();
       playMissionClearSound(state.audioPriorityDelayMs || 0);
-      showToast('Mission clear', `${mission.title} · ${mission.rewardLabel}`, 'good');
+      showToast(WORDING.toasts.missionClearTitle, `${mission.title} · ${mission.rewardLabel}`, 'good');
       if (state.xp >= xpNeeded()) levelUp(state.audioPriorityDelayMs || 0);
       generateMission();
     }
@@ -4168,9 +4332,9 @@
       if (wasPerfect) {
         state.perfectRounds += 1;
         if (!state.survivalMode && state.lives < state.maxLives) state.lives += 1;
-        showToast('Perfect Round', 'Flawless Level und ein Life-Boost', 'perfect');
+        showToast(WORDING.toasts.perfectRoundTitle, WORDING.toasts.perfectRoundSubtitle, 'perfect');
       } else {
-        showToast(`Level ${state.level}`, 'Weiter, der Rhythmus stimmt.', 'good');
+        showToast(`Level ${state.level}`, WORDING.toasts.levelSubtitle, 'good');
       }
       maybeUnlockThemes();
       updateMission('level-up', { perfect: wasPerfect });
@@ -4266,11 +4430,11 @@
     }
 
     function getPromptText() {
-      if (state.boss.active) return 'Boss-Runde: jetzt keine Schwachstelle verschenken.';
-      if (state.currentFlags.revenge) return 'Weak-note revenge: diese Note soll jetzt sitzen.';
-      if (state.noteAudioMode) return 'Sehen, hoeren, tippen.';
+      if (state.boss.active) return WORDING.prompts.boss;
+      if (state.currentFlags.revenge) return getRevengeLine();
+      if (state.noteAudioMode) return WORDING.prompts.audioMode;
       if (state.keySignatureMode) return `Welche Note ist das? · ${getActiveKeySignature().label}`;
-      return state.accidentalsMode ? 'Welche Note mit Vorzeichen ist das?' : 'Welche Note ist das?';
+      return state.accidentalsMode ? WORDING.prompts.accidentals : WORDING.prompts.default;
     }
 
     function pickNextNote(pool) {
@@ -4303,7 +4467,10 @@
       updateCurrentAverageTime();
       startRoundTimer();
       updateStats();
-      if (state.currentFlags.revenge) showToast('Revenge Note', `Noch einmal ${formatNoteLabel(state.current)} direkt packen.`, 'boss');
+      if (state.currentFlags.revenge) {
+        const revengeLine = getRevengeLine();
+        showToast(WORDING.toasts.revengeTitle, revengeLine, 'boss');
+      }
       if (state.noteAudioMode) setTimeout(() => playTargetPitch(state.current), 30);
     }
 
@@ -4316,8 +4483,8 @@
       state.levelSkips += 1;
       updateMission('skip', { note: state.current, revenge: state.currentFlags.revenge });
       if (state.boss.active) resolveBossFailure();
-      setFeedback('Uebersprungen. Perfect ist fuer dieses Level weg.', 'bad');
-      showToast('Skip', 'Weiter ohne Punktverlust, aber ohne Perfect.', 'bad');
+      setFeedback(WORDING.feedback.skip, 'bad');
+      showToast(WORDING.toasts.skipTitle, WORDING.toasts.skipSubtitle, 'bad');
       vibrate(18);
       updateStats();
       nextRound(false);
@@ -4361,17 +4528,19 @@
         let priorityToastShown = updateMission('correct', { note: targetNote, solveTime, revenge: state.currentFlags.revenge });
         if (speedResult.unlockedTiers.length > 0) {
           const topUnlock = speedResult.unlockedTiers[speedResult.unlockedTiers.length - 1];
+          const ladderReaction = getLadderReaction(Math.max(0, topUnlock.tier.level - 1));
           const rewardBits = [];
           if (topUnlock.reward.rewardXp > 0) rewardBits.push(`+${topUnlock.reward.rewardXp} XP`);
           if (topUnlock.reward.rewardLife > 0) rewardBits.push(`+${topUnlock.reward.rewardLife} Life`);
           if (topUnlock.tier.fastChainXp > 0) rewardBits.push(`naechste Fast +${topUnlock.tier.fastChainXp}`);
-          showToast(`${topUnlock.tier.name}!`, `Speed x${state.speedStreak}${rewardBits.length ? ' · ' + rewardBits.join(' · ') : ''}`, 'perfect');
+          showToast(ladderReaction, `Speed x${state.speedStreak}${rewardBits.length ? ' · ' + rewardBits.join(' · ') : ''}`, 'perfect');
           priorityToastShown = true;
         }
         if (speedResult.unlockedLoops.length > 0) {
           const topLoop = speedResult.unlockedLoops[speedResult.unlockedLoops.length - 1];
+          const ladderReaction = getLadderReaction((SPEED_TIERS.length - 1) + topLoop.loop);
           const loopRewardBits = [`+${topLoop.reward.rewardXp} XP`, `naechste Fast +${speedResult.chainXp}`];
-          showToast(`Overdrive x${topLoop.loop + 1}!`, `Speed x${state.speedStreak} · ${loopRewardBits.join(' · ')}`, 'perfect');
+          showToast(ladderReaction, `Speed x${state.speedStreak} · ${loopRewardBits.join(' · ')}`, 'perfect');
           priorityToastShown = true;
         }
         if (state.boss.active) {
@@ -4386,7 +4555,7 @@
           priorityToastShown = true;
         }
         maybeUnlockThemes();
-        const message = toastBits.length ? toastBits.join(' · ') : 'Stark.';
+        const message = toastBits.length ? toastBits.join(' · ') : WORDING.feedback.fallbackGood;
         setFeedback(message, 'good');
         if (toastBits.length && !priorityToastShown) {
           showToast(message, `${formatNoteLabel(targetNote, true)} sitzt.`, state.boss.active ? 'boss' : 'good');
@@ -4414,8 +4583,9 @@
         flashAnswerButton(guess, 'bad');
         updateMission('wrong', { note: targetNote, revenge: state.currentFlags.revenge });
         if (state.boss.active) resolveBossFailure();
-        setFeedback('Nicht ganz. Versuch die Revenge-Note direkt danach zu holen.', 'bad');
-        showToast('Fast', 'Die Note kommt als Revenge direkt wieder.', 'bad');
+        const revengeLine = getRevengeLine();
+        setFeedback(`${revengeLine} ${WORDING.feedback.wrongRevengeSuffix}`, 'bad');
+        showToast(WORDING.toasts.wrongTitle, revengeLine, 'bad');
         updateStats();
         saveProgress();
         if (state.lives === 0) {
@@ -4640,6 +4810,7 @@
     window.addEventListener('orientationchange', updateViewportUnit);
 
     if (isTelegramBrowser || isEmbeddedWebView) document.body.classList.add('telegram-browser');
+    applyStaticWording();
     updateViewportUnit();
     loadProgress();
     applyGameMode();
