@@ -453,18 +453,43 @@
     }
 
     .life-note {
+      position: relative;
+      display: inline-block;
       font-size: 20px;
       line-height: 1;
-      color: var(--accent);
-      filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.32));
-      transition: transform 0.14s ease, opacity 0.14s ease, filter 0.14s ease;
+      color: var(--accent2);
+      text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 8px rgba(var(--accent-rgb), 0.18),
+        0 0 14px rgba(var(--accent-rgb), 0.1);
+      filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.24));
+      transform: translateY(-1px) rotate(var(--life-tilt, 0deg)) scale(1.02);
+      transition: transform 0.14s ease, opacity 0.14s ease, filter 0.14s ease, text-shadow 0.14s ease;
       user-select: none;
+    }
+
+    .life-note.active {
+      animation: lifeNoteFloat 2.8s ease-in-out infinite;
+      animation-delay: var(--life-delay, 0s);
     }
 
     .life-note.lost {
       opacity: 0.18;
+      color: rgba(255, 255, 255, 0.46);
+      text-shadow: none;
       transform: scale(0.88);
       filter: none;
+    }
+
+    @keyframes lifeNoteFloat {
+      0%,
+      100% {
+        transform: translateY(-1px) rotate(var(--life-tilt, 0deg)) scale(1.02);
+      }
+
+      50% {
+        transform: translateY(-3px) rotate(calc(var(--life-tilt, 0deg) * 0.7)) scale(1.07);
+      }
     }
 
     .pill {
@@ -835,6 +860,36 @@
       animation: noteFlashBad 0.3s ease;
     }
 
+    .note-pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .note-btn.accidental-flat {
+      background:
+        linear-gradient(180deg, rgba(var(--accent-rgb), 0.16), rgba(255, 255, 255, 0.04)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018));
+      border-color: rgba(var(--accent-rgb), 0.28);
+    }
+
+    .note-btn.accidental-sharp {
+      background:
+        linear-gradient(180deg, rgba(var(--accent-2-rgb), 0.18), rgba(255, 255, 255, 0.04)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018));
+      border-color: rgba(var(--accent-2-rgb), 0.3);
+    }
+
+    .accidental-hint {
+      display: block;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      opacity: 0.78;
+      text-transform: uppercase;
+    }
+
     .speed-glow {
       animation: speedPulse 0.7s infinite alternate;
       filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.76));
@@ -1040,7 +1095,7 @@
       }
 
       .mobile-stat {
-        gap: 5px;
+        gap: 7px;
       }
 
       .mobile-stat-label {
@@ -1053,6 +1108,26 @@
 
       .mobile-lives .life-note {
         font-size: 20px;
+      }
+
+      .mobile-stat.top-left {
+        top: 16px;
+        left: 16px;
+      }
+
+      .mobile-stat.top-right {
+        top: 16px;
+        right: 16px;
+      }
+
+      .mobile-stat.bottom-left {
+        bottom: 16px;
+        left: 16px;
+      }
+
+      .mobile-stat.bottom-right {
+        bottom: 16px;
+        right: 16px;
       }
 
       .stats {
@@ -1370,6 +1445,24 @@
               <option value="5">5</option>
             </select>
           </label>
+          <label class="toggle-row"><span>Vorzeichen</span><input type="checkbox" id="accidentalsToggle"></label>
+          <label class="toggle-row"><span>Tonart-Modus</span><input type="checkbox" id="keySignatureToggle"></label>
+          <label class="toggle-row">
+            <span>Tonart</span>
+            <select id="keySignatureSelect">
+              <option value="none">C-Dur · 0 Vorzeichen</option>
+              <option value="g_major">G-Dur · 1 Kreuz</option>
+              <option value="d_major">D-Dur · 2 Kreuze</option>
+              <option value="a_major">A-Dur · 3 Kreuze</option>
+              <option value="e_major">E-Dur · 4 Kreuze</option>
+              <option value="h_major">H-Dur · 5 Kreuze</option>
+              <option value="f_major">F-Dur · 1 B</option>
+              <option value="b_major">B-Dur · 2 Bs</option>
+              <option value="es_major">Es-Dur · 3 Bs</option>
+              <option value="as_major">As-Dur · 4 Bs</option>
+              <option value="des_major">Des-Dur · 5 Bs</option>
+            </select>
+          </label>
         </div>
 
       </div>
@@ -1464,6 +1557,30 @@
     const STORAGE_KEY = 'notenlerntrainer-v2';
     const NOTE_ORDER = ['C', 'D', 'E', 'F', 'G', 'A', 'H'];
     const NOTE_TO_SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, H: 11 };
+    const ACCIDENTAL_SIGNS = { flat: '\u266D', sharp: '\u266F' };
+    const SHARP_NOTE_NAMES = { C: 'Cis', D: 'Dis', E: 'Eis', F: 'Fis', G: 'Gis', A: 'Ais', H: 'His' };
+    const FLAT_NOTE_NAMES = { C: 'Ces', D: 'Des', E: 'Es', F: 'Fes', G: 'Ges', A: 'As', H: 'B' };
+    const KEY_SIGNATURES = {
+      none: { id: 'none', label: 'C-Dur', count: 0, accidental: null, notes: [] },
+      g_major: { id: 'g_major', label: 'G-Dur', count: 1, accidental: 'sharp', notes: ['F'] },
+      d_major: { id: 'd_major', label: 'D-Dur', count: 2, accidental: 'sharp', notes: ['F', 'C'] },
+      a_major: { id: 'a_major', label: 'A-Dur', count: 3, accidental: 'sharp', notes: ['F', 'C', 'G'] },
+      e_major: { id: 'e_major', label: 'E-Dur', count: 4, accidental: 'sharp', notes: ['F', 'C', 'G', 'D'] },
+      h_major: { id: 'h_major', label: 'H-Dur', count: 5, accidental: 'sharp', notes: ['F', 'C', 'G', 'D', 'A'] },
+      f_major: { id: 'f_major', label: 'F-Dur', count: 1, accidental: 'flat', notes: ['H'] },
+      b_major: { id: 'b_major', label: 'B-Dur', count: 2, accidental: 'flat', notes: ['H', 'E'] },
+      es_major: { id: 'es_major', label: 'Es-Dur', count: 3, accidental: 'flat', notes: ['H', 'E', 'A'] },
+      as_major: { id: 'as_major', label: 'As-Dur', count: 4, accidental: 'flat', notes: ['H', 'E', 'A', 'D'] },
+      des_major: { id: 'des_major', label: 'Des-Dur', count: 5, accidental: 'flat', notes: ['H', 'E', 'A', 'D', 'G'] }
+    };
+    const TREBLE_KEY_SIGNATURE_STEPS = {
+      sharp: [10, 7, 11, 8, 5],
+      flat: [6, 9, 5, 8, 4]
+    };
+    const BASS_KEY_SIGNATURE_STEPS = {
+      sharp: [8, 5, 9, 6, 3],
+      flat: [4, 7, 3, 6, 2]
+    };
     const NOTE_ICON = '\u266A';
     const TREBLE_CLEF = '\uD834\uDD1E';
     const BASS_CLEF = '\uD834\uDD22';
@@ -1747,6 +1864,37 @@
       return notes;
     }
 
+    function getAccidentalName(baseName, accidental) {
+      if (accidental === 'sharp') return SHARP_NOTE_NAMES[baseName] || `${baseName}is`;
+      if (accidental === 'flat') return FLAT_NOTE_NAMES[baseName] || `${baseName}es`;
+      return baseName;
+    }
+
+    function getActiveKeySignature() {
+      return KEY_SIGNATURES[state.keySignatureId] || KEY_SIGNATURES.none;
+    }
+
+    function getKeySignatureAccidentalForName(noteName) {
+      if (!state.keySignatureMode) return null;
+      const signature = getActiveKeySignature();
+      if (!signature.accidental) return null;
+      return signature.notes.includes(noteName) ? signature.accidental : null;
+    }
+
+    function getDisplayNoteName(note) {
+      return getAccidentalName(note.name, note.accidental || getKeySignatureAccidentalForName(note.name));
+    }
+
+    function formatNoteLabel(note, includeOctave = false) {
+      return `${getDisplayNoteName(note)}${includeOctave ? note.octave : ''}`;
+    }
+
+    function withRandomAccidental(note) {
+      if (state.keySignatureMode || !state.accidentalsMode) return { ...note, accidental: null };
+      const accidental = Math.random() < 0.5 ? 'flat' : 'sharp';
+      return { ...note, accidental };
+    }
+
     const TREBLE_NOTES_ALL = buildClefRange('treble', 'C', 4, -8, 24);
     const BASS_NOTES_ALL = buildClefRange('bass', 'E', 2, -10, 22);
 
@@ -1757,6 +1905,9 @@
     const noteAudioToggle = document.getElementById('noteAudioToggle');
     const popupToggle = document.getElementById('popupToggle');
     const extraLedgerLinesSelect = document.getElementById('extraLedgerLinesSelect');
+    const accidentalsToggle = document.getElementById('accidentalsToggle');
+    const keySignatureToggle = document.getElementById('keySignatureToggle');
+    const keySignatureSelect = document.getElementById('keySignatureSelect');
     const nextBtn = document.getElementById('nextBtn');
     const toneBtn = document.getElementById('toneBtn');
     const menuToggle = document.getElementById('menuToggle');
@@ -1850,6 +2001,9 @@
       audioPriorityDelayMs: 0,
       extraLedgerLines: 2,
       popupsEnabled: true,
+      accidentalsMode: false,
+      keySignatureMode: false,
+      keySignatureId: 'none',
       audioUnlocked: false,
       lives: 5,
       maxLives: 5,
@@ -1888,6 +2042,10 @@
     }
 
     function getNoteKey(note) {
+      return `${note.clef}:${note.name}:${note.octave}:${note.accidental || 'natural'}`;
+    }
+
+    function getBaseNoteKey(note) {
       return `${note.clef}:${note.name}:${note.octave}`;
     }
 
@@ -2004,6 +2162,9 @@
         audioEnabled: state.audioEnabled,
         noteAudioMode: state.noteAudioMode,
         popupsEnabled: state.popupsEnabled,
+        accidentalsMode: state.accidentalsMode,
+        keySignatureMode: state.keySignatureMode,
+        keySignatureId: state.keySignatureId,
         extraLedgerLines: state.extraLedgerLines,
         survivalMode: state.survivalMode,
         noteStats: state.noteStats,
@@ -2049,6 +2210,9 @@
         state.audioEnabled = data.audioEnabled !== false;
         state.noteAudioMode = data.noteAudioMode === true;
         state.popupsEnabled = data.popupsEnabled !== false;
+        state.accidentalsMode = data.accidentalsMode === true;
+        state.keySignatureMode = data.keySignatureMode === true;
+        if (KEY_SIGNATURES[data.keySignatureId]) state.keySignatureId = data.keySignatureId;
         state.extraLedgerLines = Number.isFinite(data.extraLedgerLines) ? clampNumber(Math.round(data.extraLedgerLines), 0, 5) : 2;
         state.survivalMode = data.survivalMode === true;
         state.noteStats = data.noteStats && typeof data.noteStats === 'object' ? data.noteStats : {};
@@ -2394,7 +2558,7 @@
     }
 
     function flashAnswerButton(noteName, variant) {
-      const button = [...answerGrid.children].find(child => child.textContent === noteName);
+      const button = [...answerGrid.querySelectorAll('button')].find(child => child.textContent.replace(/\s+/g, ' ').trim().startsWith(noteName));
       if (!button) return;
       button.classList.remove('flash-good', 'flash-bad');
       void button.offsetWidth;
@@ -2437,7 +2601,9 @@
       mobileLivesDisplay.innerHTML = '';
       for (let i = 0; i < state.maxLives; i++) {
         const life = document.createElement('span');
-        life.className = `life-note${i >= state.lives ? ' lost' : ''}`;
+        life.className = `life-note${i >= state.lives ? ' lost' : ' active'}`;
+        life.style.setProperty('--life-tilt', `${(i % 2 === 0 ? -1 : 1) * (2 + (i % 3))}deg`);
+        life.style.setProperty('--life-delay', `${i * 0.12}s`);
         life.textContent = NOTE_ICON;
         life.setAttribute('aria-hidden', 'true');
         livesDisplay.appendChild(life);
@@ -2526,6 +2692,8 @@
       const isMobile = window.innerWidth <= 760;
       const isTiny = window.innerWidth <= 460;
       const extraLines = clampNumber(Number(state.extraLedgerLines) || 0, 0, 5);
+      const keySignatureCount = state.keySignatureMode ? getActiveKeySignature().count : 0;
+      const keySignatureShift = keySignatureCount * (isMobile ? 26 : 18);
 
       if (isMobile) {
         const base = isTiny
@@ -2535,7 +2703,7 @@
               left: 120,
               right: 740,
               lineGap: 64,
-              noteX: 474,
+              noteX: 474 + keySignatureShift,
               ledgerHalfWidth: 68,
               noteRx: 40,
               noteRy: 26,
@@ -2547,7 +2715,7 @@
               left: 105,
               right: 755,
               lineGap: 64,
-              noteX: 474,
+              noteX: 474 + keySignatureShift,
               ledgerHalfWidth: 68,
               noteRx: 40,
               noteRy: 26,
@@ -2601,7 +2769,7 @@
         right: 790,
         lineGap: 32,
         topY: 158,
-        noteX: 470,
+        noteX: 470 + keySignatureShift,
         ledgerHalfWidth: 34,
         noteRx: 20,
         noteRy: 13,
@@ -2729,6 +2897,62 @@
       targetLayer.appendChild(group);
     }
 
+    function appendKeySignature(note, layout, clefX, clefWidth, targetLayer, theme, noteClass = '') {
+      if (!state.keySignatureMode) return;
+      const signature = getActiveKeySignature();
+      if (!signature.accidental || signature.count === 0) return;
+      const stepsByClef = note.clef === 'treble' ? TREBLE_KEY_SIGNATURE_STEPS : BASS_KEY_SIGNATURE_STEPS;
+      const startX = clefX + Math.round(clefWidth * 0.52);
+      const spacing = layout.isMobile ? 26 : 18;
+      const fontSize = layout.isMobile ? Math.round(layout.lineGap * 1.7) : Math.round(layout.lineGap * 1.7);
+      const symbolXOffset = signature.accidental === 'flat' ? Math.round(layout.lineGap * 0.3) : 0;
+      const symbolYOffset = signature.accidental === 'sharp'
+        ? Math.round(layout.lineGap * 0.16)
+        : Math.round(layout.lineGap * 0.4);
+      for (let index = 0; index < signature.count; index++) {
+        const x = startX + index * spacing + symbolXOffset;
+        const y = yFromStaffStep(stepsByClef[signature.accidental][index]) + symbolYOffset;
+        const accidentalGroup = createSvgEl('g');
+        const accidentalShadow = createSvgEl('text', {
+          x: x + 2,
+          y: y + 2,
+          fill: 'rgba(0,0,0,0.18)',
+          'font-size': fontSize,
+          'font-weight': 700,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle',
+          opacity: '0.9'
+        });
+        const accidental = createSvgEl('text', {
+          x,
+          y,
+          fill: 'url(#noteClefGradient)',
+          'font-size': fontSize,
+          'font-weight': 700,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle'
+        });
+        const accidentalHighlight = createSvgEl('text', {
+          x,
+          y,
+          fill: 'url(#noteBevelGradient)',
+          'font-size': fontSize,
+          'font-weight': 700,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle',
+          opacity: '0.92'
+        });
+        accidentalShadow.textContent = ACCIDENTAL_SIGNS[signature.accidental];
+        accidental.textContent = ACCIDENTAL_SIGNS[signature.accidental];
+        accidentalHighlight.textContent = ACCIDENTAL_SIGNS[signature.accidental];
+        accidentalGroup.appendChild(accidentalShadow);
+        accidentalGroup.appendChild(accidental);
+        accidentalGroup.appendChild(accidentalHighlight);
+        applySpeedGlow(accidentalGroup, noteClass);
+        targetLayer.appendChild(accidentalGroup);
+      }
+    }
+
     function drawStaff(note) {
       if (!note) return;
       staffSvg.classList.toggle('speed-active', state.speedActive);
@@ -2753,6 +2977,8 @@
         clef: note.clef,
         mobile: layout.isMobile,
         tiny: layout.isTiny,
+        keySignatureMode: state.keySignatureMode,
+        keySignatureId: state.keySignatureId,
         left: layout.left,
         right: layout.right,
         topY: layout.topY,
@@ -2857,6 +3083,7 @@
         }
 
         appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, defs, state.staffStaticLayer, theme, noteClass);
+        appendKeySignature(note, layout, clefX, clefWidth, state.staffStaticLayer, theme, noteClass);
 
         if (!layout.isMobile) {
           const badge = createSvgEl('g');
@@ -2888,7 +3115,7 @@
       defs = state.staffDefs;
 
       state.staffNoteLayer.innerHTML = '';
-      ['noteStemGradient'].forEach(id => {
+      ['noteStemGradient', 'noteHeadGradientLocal'].forEach(id => {
         const existing = defs.querySelector(`#${id}`);
         if (existing) existing.remove();
       });
@@ -2896,10 +3123,25 @@
       const y = yFromStaffStep(note.staffStep);
       const staffTop = layout.topY;
       const staffBottom = layout.topY + 4 * layout.lineGap;
+      const accidentalX = layout.noteX - Math.round(layout.noteRx * 2.8);
+      const accidentalFontSize = Math.max(50, Math.round(layout.noteRy * 4.55));
       const stemOffset = Math.round(layout.noteRx * 0.85);
       const shadowOffset = Math.max(2, Math.round(layout.noteRx * 0.1));
       const bevelOffsetX = Math.round(layout.noteRx * 0.2);
       const bevelOffsetY = Math.round(layout.noteRy * 0.3);
+      const noteHeadGradient = createSvgEl('linearGradient', {
+        id: 'noteHeadGradientLocal',
+        gradientUnits: 'userSpaceOnUse',
+        x1: layout.noteX - (layout.noteRx * 1.15),
+        y1: y - (layout.noteRy * 1.15),
+        x2: layout.noteX + (layout.noteRx * 1.15),
+        y2: y + (layout.noteRy * 1.15),
+        gradientTransform: `rotate(40 ${layout.noteX} ${y})`
+      });
+      noteHeadGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+      noteHeadGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
+      noteHeadGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+      defs.appendChild(noteHeadGradient);
       const ledgerYs = [];
       if (y < staffTop) for (let ly = staffTop - layout.lineGap; ly >= y; ly -= layout.lineGap) ledgerYs.push(ly);
       if (y > staffBottom) for (let ly = staffBottom + layout.lineGap; ly <= y; ly += layout.lineGap) ledgerYs.push(ly);
@@ -2918,6 +3160,81 @@
         state.staffNoteLayer.appendChild(ledger);
       });
 
+      if (note.accidental && !state.keySignatureMode) {
+        const accidentalYOffset = note.accidental === 'sharp'
+          ? Math.round(layout.noteRy * 0.45)
+          : Math.round(layout.noteRy * -0.3);
+        const accidentalGradientId = 'noteAccidentalGradient';
+        const accidentalHighlightId = 'noteAccidentalHighlight';
+        [accidentalGradientId, accidentalHighlightId].forEach(id => {
+          const existing = defs.querySelector(`#${id}`);
+          if (existing) existing.remove();
+        });
+        const accidentalGradient = createSvgEl('linearGradient', {
+          id: accidentalGradientId,
+          gradientUnits: 'userSpaceOnUse',
+          x1: accidentalX - accidentalFontSize * 0.42,
+          y1: y + accidentalYOffset - accidentalFontSize * 0.58,
+          x2: accidentalX + accidentalFontSize * 0.44,
+          y2: y + accidentalYOffset + accidentalFontSize * 0.5
+        });
+        accidentalGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+        accidentalGradient.appendChild(createSvgEl('stop', { offset: '38%', 'stop-color': mixHexColors(theme.accent2, theme.accent, 0.34) }));
+        accidentalGradient.appendChild(createSvgEl('stop', { offset: '68%', 'stop-color': theme.accent }));
+        accidentalGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+        defs.appendChild(accidentalGradient);
+        const accidentalHighlightGradient = createSvgEl('linearGradient', {
+          id: accidentalHighlightId,
+          gradientUnits: 'userSpaceOnUse',
+          x1: accidentalX - accidentalFontSize * 0.4,
+          y1: y + accidentalYOffset - accidentalFontSize * 0.55,
+          x2: accidentalX + accidentalFontSize * 0.4,
+          y2: y + accidentalYOffset + accidentalFontSize * 0.45
+        });
+        accidentalHighlightGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': '#ffffff', 'stop-opacity': '0.24' }));
+        accidentalHighlightGradient.appendChild(createSvgEl('stop', { offset: '30%', 'stop-color': '#ffffff', 'stop-opacity': '0.1' }));
+        accidentalHighlightGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
+        defs.appendChild(accidentalHighlightGradient);
+        const accidentalGroup = createSvgEl('g');
+        const accidentalShadow = createSvgEl('text', {
+          x: accidentalX + 2,
+          y: y + accidentalYOffset + 2,
+          fill: 'rgba(0,0,0,0.18)',
+          'font-size': accidentalFontSize,
+          'font-weight': 700,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle',
+          opacity: '0.9'
+        });
+        const accidental = createSvgEl('text', {
+          x: accidentalX,
+          y: y + accidentalYOffset,
+          fill: `url(#${accidentalGradientId})`,
+          'font-size': accidentalFontSize,
+          'font-weight': 700,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle'
+        });
+        const accidentalHighlight = createSvgEl('text', {
+          x: accidentalX,
+          y: y + accidentalYOffset,
+          fill: `url(#${accidentalHighlightId})`,
+          'font-size': accidentalFontSize,
+          'font-weight': 700,
+          'text-anchor': 'middle',
+          'dominant-baseline': 'middle',
+          opacity: '0.8'
+        });
+        accidentalShadow.textContent = ACCIDENTAL_SIGNS[note.accidental];
+        accidental.textContent = ACCIDENTAL_SIGNS[note.accidental];
+        accidentalHighlight.textContent = ACCIDENTAL_SIGNS[note.accidental];
+        accidentalGroup.appendChild(accidentalShadow);
+        accidentalGroup.appendChild(accidental);
+        accidentalGroup.appendChild(accidentalHighlight);
+        applySpeedGlow(accidentalGroup, noteClass);
+        state.staffNoteLayer.appendChild(accidentalGroup);
+      }
+
       const shadow = createSvgEl('ellipse', {
         cx: layout.noteX + shadowOffset,
         cy: y + shadowOffset,
@@ -2934,7 +3251,7 @@
         rx: layout.noteRx,
         ry: layout.noteRy,
         transform: `rotate(-20 ${layout.noteX} ${y})`,
-        fill: 'url(#noteHeadGradient)',
+        fill: 'url(#noteHeadGradientLocal)',
         stroke: 'rgba(255,255,255,0.20)',
         'stroke-width': 1.25
       });
@@ -3370,7 +3687,9 @@
     }
 
     function getMidiNoteNumber(note) {
-      return (note.octave + 1) * 12 + NOTE_TO_SEMITONE[note.name];
+      const appliedAccidental = note.accidental || getKeySignatureAccidentalForName(note.name);
+      const accidentalOffset = appliedAccidental === 'sharp' ? 1 : appliedAccidental === 'flat' ? -1 : 0;
+      return (note.octave + 1) * 12 + NOTE_TO_SEMITONE[note.name] + accidentalOffset;
     }
 
     function playTargetPitch(note) {
@@ -3543,8 +3862,8 @@
     }
 
     function takeDueRevenge(pool) {
-      const poolKeys = new Set(pool.map(getNoteKey));
-      const index = state.revengeQueue.findIndex(item => item.dueRound <= state.roundCount && poolKeys.has(item.key));
+      const poolKeys = new Set(pool.map(getBaseNoteKey));
+      const index = state.revengeQueue.findIndex(item => item.dueRound <= state.roundCount && poolKeys.has(getBaseNoteKey(item.note)));
       if (index === -1) return null;
       const [item] = state.revengeQueue.splice(index, 1);
       return item.note;
@@ -3562,8 +3881,9 @@
       const total = state.survivalMode ? 3 : 4;
       const sequence = [];
       for (const note of ranked) {
-        if (sequence.some(item => getNoteKey(item) === getNoteKey(note))) continue;
-        sequence.push(note);
+        const accidentalNote = withRandomAccidental(note);
+        if (sequence.some(item => getNoteKey(item) === getNoteKey(accidentalNote))) continue;
+        sequence.push(accidentalNote);
         if (sequence.length >= total) break;
       }
       state.boss.active = true;
@@ -3852,6 +4172,10 @@
       audioToggle.checked = state.audioEnabled;
       noteAudioToggle.checked = state.noteAudioMode;
       popupToggle.checked = state.popupsEnabled;
+      accidentalsToggle.checked = state.accidentalsMode;
+      keySignatureToggle.checked = state.keySignatureMode;
+      keySignatureSelect.value = state.keySignatureId;
+      keySignatureSelect.disabled = !state.keySignatureMode;
       extraLedgerLinesSelect.value = String(state.extraLedgerLines);
     }
 
@@ -3859,18 +4183,19 @@
       if (state.boss.active) return 'Boss-Runde: jetzt keine Schwachstelle verschenken.';
       if (state.currentFlags.revenge) return 'Weak-note revenge: diese Note soll jetzt sitzen.';
       if (state.noteAudioMode) return 'Sehen, hoeren, tippen.';
-      return 'Welche Note ist das?';
+      if (state.keySignatureMode) return `Welche Note ist das? · ${getActiveKeySignature().label}`;
+      return state.accidentalsMode ? 'Welche Note mit Vorzeichen ist das?' : 'Welche Note ist das?';
     }
 
     function pickNextNote(pool) {
       if (state.boss.active) return { note: state.boss.sequence[state.boss.index], flags: { revenge: false, boss: true } };
       const revenge = takeDueRevenge(pool);
       if (revenge) return { note: revenge, flags: { revenge: true, boss: false } };
-      let next = getWeightedRandomNote(pool);
+      let next = withRandomAccidental(getWeightedRandomNote(pool));
       if (state.current && pool.length > 1) {
         let guard = 0;
         while (getNoteKey(next) === getNoteKey(state.current) && guard < 20) {
-          next = getWeightedRandomNote(pool);
+          next = withRandomAccidental(getWeightedRandomNote(pool));
           guard += 1;
         }
       }
@@ -3892,7 +4217,7 @@
       updateCurrentAverageTime();
       startRoundTimer();
       updateStats();
-      if (state.currentFlags.revenge) showToast('Revenge Note', `Noch einmal ${state.current.name} direkt packen.`, 'boss');
+      if (state.currentFlags.revenge) showToast('Revenge Note', `Noch einmal ${formatNoteLabel(state.current)} direkt packen.`, 'boss');
       if (state.noteAudioMode) setTimeout(() => playTargetPitch(state.current), 30);
     }
 
@@ -3918,7 +4243,7 @@
       clearPendingRoundAdvance();
       const solveTime = getElapsedSecondsCapped();
       const targetNote = state.current;
-      if (guess === targetNote.name) {
+      if (guess === getDisplayNoteName(targetNote)) {
         recordSolveTime(targetNote, solveTime);
         const isSpeedHit = solveTime < 2;
         const nextSpeedStreak = isSpeedHit ? state.speedStreak + 1 : 0;
@@ -3978,7 +4303,7 @@
         const message = toastBits.length ? toastBits.join(' · ') : 'Stark.';
         setFeedback(message, 'good');
         if (toastBits.length && !priorityToastShown) {
-          showToast(message, `${targetNote.name}${targetNote.octave} sitzt.`, state.boss.active ? 'boss' : 'good');
+          showToast(message, `${formatNoteLabel(targetNote, true)} sitzt.`, state.boss.active ? 'boss' : 'good');
         }
         updateStats();
         saveProgress();
@@ -4016,6 +4341,37 @@
 
     function createAnswerButtons() {
       answerGrid.innerHTML = '';
+      if (state.keySignatureMode) {
+        NOTE_ORDER.forEach(noteName => {
+          const button = document.createElement('button');
+          button.className = `note-btn${getKeySignatureAccidentalForName(noteName) === 'flat' ? ' accidental-flat' : getKeySignatureAccidentalForName(noteName) === 'sharp' ? ' accidental-sharp' : ''}`;
+          button.type = 'button';
+          button.textContent = getAccidentalName(noteName, getKeySignatureAccidentalForName(noteName));
+          button.addEventListener('click', () => submitGuess(getAccidentalName(noteName, getKeySignatureAccidentalForName(noteName))));
+          answerGrid.appendChild(button);
+        });
+        return;
+      }
+      if (state.accidentalsMode) {
+        NOTE_ORDER.forEach(noteName => {
+          const pair = document.createElement('div');
+          pair.className = 'note-pair';
+          const flatButton = document.createElement('button');
+          flatButton.className = 'note-btn accidental-flat';
+          flatButton.type = 'button';
+          flatButton.innerHTML = `${getAccidentalName(noteName, 'flat')}<span class="accidental-hint">s</span>`;
+          flatButton.addEventListener('click', () => submitGuess(getAccidentalName(noteName, 'flat')));
+          const sharpButton = document.createElement('button');
+          sharpButton.className = 'note-btn accidental-sharp';
+          sharpButton.type = 'button';
+          sharpButton.innerHTML = `${getAccidentalName(noteName, 'sharp')}<span class="accidental-hint">is</span>`;
+          sharpButton.addEventListener('click', () => submitGuess(getAccidentalName(noteName, 'sharp')));
+          pair.appendChild(flatButton);
+          pair.appendChild(sharpButton);
+          answerGrid.appendChild(pair);
+        });
+        return;
+      }
       NOTE_ORDER.forEach(noteName => {
         const button = document.createElement('button');
         button.className = 'note-btn';
@@ -4051,7 +4407,7 @@
       }));
       console.assert(xpNeeded(1) === 8, 'Level 1 should need 8 XP.');
       console.assert(getDifficultyMultiplier() > 0, 'Difficulty multiplier should exist.');
-      console.assert(getNoteKey(TREBLE_NOTES_ALL.find(note => note.staffStep === 0)) === 'treble:C:4', 'Treble key should be stable.');
+      console.assert(getNoteKey(TREBLE_NOTES_ALL.find(note => note.staffStep === 0)) === 'treble:C:4:natural', 'Treble key should be stable.');
       console.assert(BASS_NOTES_ALL.find(note => note.name === 'C' && note.octave === 4).staffStep === 12, 'Bass mapping should reach C4.');
       console.assert(TREBLE_NOTES_ALL.find(note => note.name === 'C' && note.octave === 6).staffStep === 14, 'Treble mapping should reach C6.');
       console.assert(getFastBonus(0.8) >= 2, 'Fast answers should grant bonus XP.');
@@ -4124,6 +4480,33 @@
       saveProgress();
     });
 
+    accidentalsToggle.addEventListener('change', () => {
+      state.accidentalsMode = accidentalsToggle.checked;
+      if (state.accidentalsMode) state.keySignatureMode = false;
+      setButtonsFromState();
+      createAnswerButtons();
+      saveProgress();
+      nextRound(true);
+    });
+
+    keySignatureToggle.addEventListener('change', () => {
+      state.keySignatureMode = keySignatureToggle.checked;
+      if (state.keySignatureMode) state.accidentalsMode = false;
+      setButtonsFromState();
+      createAnswerButtons();
+      saveProgress();
+      nextRound(true);
+    });
+
+    keySignatureSelect.addEventListener('change', () => {
+      state.keySignatureId = KEY_SIGNATURES[keySignatureSelect.value] ? keySignatureSelect.value : 'none';
+      setButtonsFromState();
+      createAnswerButtons();
+      drawCurrentState();
+      saveProgress();
+      if (state.keySignatureMode) setFeedback(getPromptText());
+    });
+
     extraLedgerLinesSelect.addEventListener('change', () => {
       state.extraLedgerLines = clampNumber(Number(extraLedgerLinesSelect.value) || 0, 0, 5);
       drawCurrentState();
@@ -4144,6 +4527,7 @@
     window.addEventListener('keydown', event => {
       unlockAudio();
       ensureAudioContext();
+      if (state.accidentalsMode || state.keySignatureMode) return;
       const key = event.key.toUpperCase();
       if (NOTE_ORDER.includes(key)) submitGuess(key);
     });
