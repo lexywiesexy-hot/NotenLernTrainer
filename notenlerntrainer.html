@@ -2619,40 +2619,42 @@
       const resolvedThemeId = themeId || getLevelThemeId(level);
       const base = THEMES[resolvedThemeId] || THEMES.aurora;
       const themeIndex = Math.max(0, THEME_IDS.indexOf(resolvedThemeId));
+      const normalizedLevel = Math.max(1, Math.floor(level || 1));
       const seed = (level * 0.754877666) + (themeIndex * 0.618033989) + 0.314159265;
+      const progressionPulse = normalizedLevel === 10 ? 0 : ((normalizedLevel - 1) % 2 === 1 ? 1 : 0);
       const drift = (multiplier, spread) => (fract(seed * multiplier) - 0.5) * spread;
       const accentBase = hexToHsl(base.accent);
       const accent2Base = hexToHsl(base.accent2);
       const goodBase = hexToHsl(base.good);
       const badBase = hexToHsl(base.bad);
-      const hueShift = drift(1.073, 34) + drift(2.417, 12);
+      const hueShift = drift(1.073, 34) + drift(2.417, 12) + progressionPulse * 15;
       const accentHue = wrapHue(accentBase.h + hueShift);
       const accent2Hue = wrapHue(accent2Base.h + hueShift * 0.82 + drift(1.733, 16));
       const accent = hslToHex(
         accentHue,
-        clampNumber(accentBase.s * 0.82 + 7 + drift(1.917, 8), 48, 76),
-        clampNumber(accentBase.l + 8 + drift(2.371, 6), 68, 84)
+        clampNumber(accentBase.s * 0.82 + 7 + drift(1.917, 8) + progressionPulse * 7, 48, 82),
+        clampNumber(accentBase.l + 8 + drift(2.371, 6) + progressionPulse * 5, 68, 88)
       );
       const accent2 = hslToHex(
         accent2Hue,
-        clampNumber(accent2Base.s * 0.8 + 6 + drift(2.089, 8), 44, 74),
-        clampNumber(accent2Base.l + 7 + drift(2.669, 6), 70, 86)
+        clampNumber(accent2Base.s * 0.8 + 6 + drift(2.089, 8) + progressionPulse * 6, 44, 78),
+        clampNumber(accent2Base.l + 7 + drift(2.669, 6) + progressionPulse * 5, 70, 90)
       );
-      const moodHue = wrapHue((accentHue * 0.58) + (accent2Hue * 0.42) - 18 + drift(0.887, 18));
+      const moodHue = wrapHue((accentHue * 0.58) + (accent2Hue * 0.42) - 18 + drift(0.887, 18) + progressionPulse * 8);
       const bg1 = hslToHex(
         moodHue - 26,
         clampNumber(36 + drift(1.311, 8), 28, 44),
-        clampNumber(10.5 + drift(1.119, 3.6), 8, 14)
+        clampNumber(10.5 + drift(1.119, 3.6) + progressionPulse * 1.2, 8, 15)
       );
       const bg2 = hslToHex(
         moodHue - 8,
-        clampNumber(42 + drift(1.593, 10), 34, 54),
-        clampNumber(18.5 + drift(1.437, 4.2), 15, 25)
+        clampNumber(42 + drift(1.593, 10) + progressionPulse * 5, 34, 58),
+        clampNumber(18.5 + drift(1.437, 4.2) + progressionPulse * 2.2, 15, 28)
       );
       const bg3 = hslToHex(
         moodHue + 10,
-        clampNumber(48 + drift(1.977, 12), 38, 62),
-        clampNumber(30 + drift(1.697, 6), 24, 40)
+        clampNumber(48 + drift(1.977, 12) + progressionPulse * 8, 38, 68),
+        clampNumber(30 + drift(1.697, 6) + progressionPulse * 3.2, 24, 44)
       );
       const good = hslToHex(
         wrapHue(goodBase.h + hueShift * 0.24 - 4 + drift(0.713, 8)),
@@ -2674,9 +2676,9 @@
         bg1,
         bg2,
         bg3,
-        panel: rgbaFromHex(panelTint, 0.078 + fract(seed * 2.03) * 0.018),
-        panelStrong: rgbaFromHex(mixHexColors(bg1, '#080d16', 0.28), 0.78 + fract(seed * 1.57) * 0.05),
-        border: rgbaFromHex(borderTint, 0.13 + fract(seed * 1.93) * 0.03),
+        panel: rgbaFromHex(panelTint, 0.078 + fract(seed * 2.03) * 0.018 + progressionPulse * 0.014),
+        panelStrong: rgbaFromHex(mixHexColors(bg1, '#080d16', 0.28 - progressionPulse * 0.05), 0.78 + fract(seed * 1.57) * 0.05),
+        border: rgbaFromHex(borderTint, 0.13 + fract(seed * 1.93) * 0.03 + progressionPulse * 0.03),
         text,
         muted,
         accent,
