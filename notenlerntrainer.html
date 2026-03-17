@@ -2184,6 +2184,27 @@
       return `#${toHex(a.r * weightA + b.r * weightB)}${toHex(a.g * weightA + b.g * weightB)}${toHex(a.b * weightA + b.b * weightB)}`;
     }
 
+    function invertHexColor(color) {
+      const clean = String(color || '').replace('#', '');
+      if (clean.length !== 6) return color;
+      const value = parseInt(clean, 16);
+      if (!Number.isFinite(value)) return color;
+      const inverted = (0xFFFFFF ^ value).toString(16).padStart(6, '0');
+      return `#${inverted}`;
+    }
+
+    function invertRgbaColor(input) {
+      const match = String(input || '').match(/rgba?\(([^)]+)\)/i);
+      if (!match) return input;
+      const parts = match[1].split(',').map(part => part.trim());
+      if (parts.length < 3) return input;
+      const r = 255 - clampNumber(Number(parts[0]) || 0, 0, 255);
+      const g = 255 - clampNumber(Number(parts[1]) || 0, 0, 255);
+      const b = 255 - clampNumber(Number(parts[2]) || 0, 0, 255);
+      const alpha = parts.length > 3 ? clampNumber(Number(parts[3]) || 0, 0, 1) : 1;
+      return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha})`;
+    }
+
     // Golden-ratio drift keeps each level feeling fresh without falling into an obvious short loop.
     function getLevelThemeId(level = state.level) {
       const normalizedLevel = Math.max(1, Math.floor(level || 1));
@@ -2277,25 +2298,42 @@
       const themeId = getLevelThemeId(state.level);
       state.selectedTheme = themeId;
       const theme = getProceduralTheme(themeId, state.level);
-      state.activeTheme = theme;
+      const appliedTheme = state.boss.active
+        ? {
+            ...theme,
+            bg1: invertHexColor(theme.bg1),
+            bg2: invertHexColor(theme.bg2),
+            bg3: invertHexColor(theme.bg3),
+            panel: invertRgbaColor(theme.panel),
+            panelStrong: invertRgbaColor(theme.panelStrong),
+            border: invertRgbaColor(theme.border),
+            text: invertHexColor(theme.text),
+            muted: invertHexColor(theme.muted),
+            accent: invertHexColor(theme.accent),
+            accent2: invertHexColor(theme.accent2),
+            good: invertHexColor(theme.good),
+            bad: invertHexColor(theme.bad)
+          }
+        : theme;
+      state.activeTheme = appliedTheme;
       const root = document.documentElement.style;
-      root.setProperty('--bg1', theme.bg1);
-      root.setProperty('--bg2', theme.bg2);
-      root.setProperty('--bg3', theme.bg3);
-      root.setProperty('--panel', theme.panel);
-      root.setProperty('--panel-strong', theme.panelStrong);
-      root.setProperty('--border', theme.border);
-      root.setProperty('--text', theme.text);
-      root.setProperty('--muted', theme.muted);
-      root.setProperty('--accent', theme.accent);
-      root.setProperty('--accent-2', theme.accent2);
-      root.setProperty('--good', theme.good);
-      root.setProperty('--bad', theme.bad);
-      root.setProperty('--accent-rgb', hexToRgbString(theme.accent));
-      root.setProperty('--accent-2-rgb', hexToRgbString(theme.accent2));
-      root.setProperty('--good-rgb', hexToRgbString(theme.good));
-      root.setProperty('--bad-rgb', hexToRgbString(theme.bad));
-      if (themeName) themeName.textContent = `${theme.name} · Level ${state.level}`;
+      root.setProperty('--bg1', appliedTheme.bg1);
+      root.setProperty('--bg2', appliedTheme.bg2);
+      root.setProperty('--bg3', appliedTheme.bg3);
+      root.setProperty('--panel', appliedTheme.panel);
+      root.setProperty('--panel-strong', appliedTheme.panelStrong);
+      root.setProperty('--border', appliedTheme.border);
+      root.setProperty('--text', appliedTheme.text);
+      root.setProperty('--muted', appliedTheme.muted);
+      root.setProperty('--accent', appliedTheme.accent);
+      root.setProperty('--accent-2', appliedTheme.accent2);
+      root.setProperty('--good', appliedTheme.good);
+      root.setProperty('--bad', appliedTheme.bad);
+      root.setProperty('--accent-rgb', hexToRgbString(appliedTheme.accent));
+      root.setProperty('--accent-2-rgb', hexToRgbString(appliedTheme.accent2));
+      root.setProperty('--good-rgb', hexToRgbString(appliedTheme.good));
+      root.setProperty('--bad-rgb', hexToRgbString(appliedTheme.bad));
+      if (themeName) themeName.textContent = `${theme.name}${state.boss.active ? ' · Boss' : ''} · Level ${state.level}`;
     }
 
     function showToast(title, subtitle = '', variant = 'good') {
@@ -3467,7 +3505,15 @@
       state.speedActive = state.speedTier > 0;
       state.bestSpeedTier = Math.max(state.bestSpeedTier, state.speedTier);
       state.bestSpeedLoop = Math.max(state.bestSpeedLoop, state.speedLoop);
-      const chainXp = nextTier.level < topTier.level ? nextTier.fastChainXp : nextTier.fastChainXp + nextLoop;
+      const paceBoost = solveTime <= 0.78
+        ? 3
+        : solveTime <= 1.02
+          ? 2
+          : solveTime <= 1.3
+            ? 1
+            : 0;
+      const chainBaseXp = nextTier.level < topTier.level ? nextTier.fastChainXp : nextTier.fastChainXp + nextLoop;
+      const chainXp = chainBaseXp + (state.speedTier > 0 ? paceBoost : 0);
       return { chainXp, tier: nextTier, unlockedTiers, unlockedLoops, loop: nextLoop };
     }
 
