@@ -4,7 +4,7 @@ const path = require('path');
 
 const port = Number(process.env.PORT || 3000);
 const rootDir = __dirname;
-const htmlPath = path.join(rootDir, 'notenlerntrainer-v001.html');
+const htmlPath = path.join(rootDir, 'notenlerntrainer.html');
 
 function sendFile(res, filePath) {
   fs.readFile(filePath, (error, data) => {
