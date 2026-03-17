@@ -1337,6 +1337,7 @@
           <label class="toggle-row"><span>Audiomodus</span><input type="checkbox" id="noteAudioToggle"></label>
           <label class="toggle-row"><span>Popup-Messages</span><input type="checkbox" id="popupToggle" checked></label>
           <button class="ghost-btn" id="audioTestBtn" type="button">Sound testen</button>
+          <button class="ghost-btn" id="htmlAudioTestBtn" type="button">HTML-Audio testen</button>
         </div>
 
         <div class="menu-section">
@@ -1571,6 +1572,7 @@
     const noteAudioToggle = document.getElementById('noteAudioToggle');
     const popupToggle = document.getElementById('popupToggle');
     const audioTestBtn = document.getElementById('audioTestBtn');
+    const htmlAudioTestBtn = document.getElementById('htmlAudioTestBtn');
     const extraLedgerLinesSelect = document.getElementById('extraLedgerLinesSelect');
     const nextBtn = document.getElementById('nextBtn');
     const toneBtn = document.getElementById('toneBtn');
@@ -2947,6 +2949,27 @@
       setTimeout(() => playTone(1174.66, 0.32, 'sine', 0.1), 220);
     }
 
+    function playHtmlAudioTest() {
+      try {
+        const uri = createToneWaveUri(880, 0.45, 'sine', 0.18);
+        const audio = new Audio(uri);
+        audio.preload = 'auto';
+        audio.controls = false;
+        audio.playsInline = true;
+        const cleanup = () => URL.revokeObjectURL(uri);
+        audio.addEventListener('ended', cleanup, { once: true });
+        audio.addEventListener('error', cleanup, { once: true });
+        audio.play()
+          .then(() => setFeedback('HTML-Audio-Test gestartet.', 'subtle'))
+          .catch(() => {
+            cleanup();
+            setFeedback('HTML-Audio-Test blockiert.', 'bad');
+          });
+      } catch (_) {
+        setFeedback('HTML-Audio-Test fehlgeschlagen.', 'bad');
+      }
+    }
+
     function recordSolveTime(note, elapsed) {
       const stats = getOrCreateNoteStats(note);
       stats.attempts += 1;
@@ -3686,6 +3709,10 @@
     audioTestBtn.addEventListener('click', () => {
       playAudioTestBeep();
       setFeedback('Audio-Test gestartet.', 'subtle');
+    });
+
+    htmlAudioTestBtn.addEventListener('click', () => {
+      playHtmlAudioTest();
     });
 
     extraLedgerLinesSelect.addEventListener('change', () => {
