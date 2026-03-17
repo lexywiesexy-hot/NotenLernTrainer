@@ -840,6 +840,11 @@
       filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.76));
     }
 
+    #staffSvg.speed-active {
+      animation: speedPulseRoot 0.7s infinite alternate;
+      filter: drop-shadow(0 0 12px rgba(var(--accent-rgb), 0.7));
+    }
+
     @keyframes speedPulse {
       from {
         filter: drop-shadow(0 0 7px rgba(var(--accent-rgb), 0.48));
@@ -847,6 +852,16 @@
 
       to {
         filter: drop-shadow(0 0 17px rgba(var(--accent-rgb), 0.86));
+      }
+    }
+
+    @keyframes speedPulseRoot {
+      from {
+        filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.44));
+      }
+
+      to {
+        filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), 0.88));
       }
     }
 
@@ -1235,6 +1250,10 @@
       .staff-wrap {
         height: clamp(280px, 36vh, 380px);
         min-height: clamp(280px, 36vh, 380px);
+      }
+
+      #staffSvg.speed-active {
+        filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), 0.88));
       }
 
       .answer-grid {
@@ -1786,8 +1805,8 @@
     const isEmbeddedWebView = /(Telegram|TGWebApp|wv|FBAN|FBAV|Instagram)/i.test(browserUa);
     const isIOS = /iPad|iPhone|iPod/i.test(browserUa)
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const fallbackAudioPlayers = [];
     const toneWaveUriCache = new Map();
+    const AUDIO_POOL_SIZE = 8;
 
     const state = {
       mode: 'treble',
@@ -1817,6 +1836,14 @@
       comboTimer: null,
       nextRoundTimeout: null,
       saveTimer: null,
+      fallbackAudioPool: [],
+      fallbackAudioCursor: 0,
+      renderedLivesKey: '',
+      staffStaticKey: '',
+      staffNoteLayer: null,
+      audioPriorityLevel: 0,
+      audioPriorityUntil: 0,
+      audioPriorityToken: 0,
       roundLocked: false,
       audioPriorityDelayMs: 0,
       extraLedgerLines: 2,
@@ -2002,8 +2029,13 @@
       state.saveTimer = window.setTimeout(() => {
         state.saveTimer = null;
         persistProgressNow();
-      }, 140);
+      }, 420);
     }
+
+    window.addEventListener('pagehide', () => saveProgress(true));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveProgress(true);
+    });
 
     function loadProgress() {
       try {
@@ -2301,6 +2333,26 @@
       feedbackEl.className = `feedback${type ? ` ${type}` : ''}`;
     }
 
+    function claimAudioPriority(level, durationMs) {
+      const now = performance.now();
+      if (now >= state.audioPriorityUntil || level >= state.audioPriorityLevel) {
+        state.audioPriorityLevel = level;
+        state.audioPriorityToken += 1;
+      }
+      state.audioPriorityUntil = Math.max(state.audioPriorityUntil, now + durationMs);
+      return state.audioPriorityToken;
+    }
+
+    function canPlayAudioPriority(level, token = state.audioPriorityToken) {
+      const now = performance.now();
+      if (now >= state.audioPriorityUntil) {
+        state.audioPriorityLevel = 0;
+        return true;
+      }
+      if (token !== state.audioPriorityToken) return false;
+      return level >= state.audioPriorityLevel;
+    }
+
     function flashAnswerButton(noteName, variant) {
       const button = [...answerGrid.children].find(child => child.textContent === noteName);
       if (!button) return;
@@ -2338,6 +2390,9 @@
     }
 
     function renderLives() {
+      const livesKey = `${state.lives}|${state.maxLives}`;
+      if (state.renderedLivesKey === livesKey) return;
+      state.renderedLivesKey = livesKey;
       livesDisplay.innerHTML = '';
       mobileLivesDisplay.innerHTML = '';
       for (let i = 0; i < state.maxLives; i++) {
@@ -2636,11 +2691,10 @@
 
     function drawStaff(note) {
       if (!note) return;
-      staffSvg.innerHTML = '';
+      staffSvg.classList.toggle('speed-active', state.speedActive);
       const layout = getStaffLayout();
       const theme = getActiveTheme();
       const noteClass = state.speedActive ? 'speed-glow' : '';
-      const defs = createSvgEl('defs');
       const clefX = note.clef === 'treble'
         ? (layout.isMobile ? layout.left + (layout.isTiny ? 88 : 92) : 174)
         : (layout.isMobile ? layout.left + (layout.isTiny ? 92 : 96) : 184);
@@ -2654,96 +2708,146 @@
         ? layout.clefHeightTreble
         : layout.clefHeightBass;
       updateStaffViewBox(note, layout);
+      const staticKey = JSON.stringify({
+        clef: note.clef,
+        mobile: layout.isMobile,
+        tiny: layout.isTiny,
+        left: layout.left,
+        right: layout.right,
+        topY: layout.topY,
+        lineGap: layout.lineGap,
+        clefX,
+        clefY,
+        clefWidth,
+        clefHeight,
+        theme: [theme.accent, theme.accent2, theme.bg3, theme.text]
+      });
+      let defs = null;
+      if (state.staffStaticKey !== staticKey || !state.staffNoteLayer || !staffSvg.contains(state.staffNoteLayer)) {
+        staffSvg.innerHTML = '';
+        defs = createSvgEl('defs');
+        state.staffStaticKey = staticKey;
+        state.staffNoteLayer = createSvgEl('g', { id: 'staffNoteLayer' });
       const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
-      const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
 
-      const headGradient = createSvgEl('linearGradient', { id: 'noteHeadGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
-      headGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
-      headGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
-      headGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
-      defs.appendChild(headGradient);
+        const headGradient = createSvgEl('linearGradient', { id: 'noteHeadGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+        headGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+        headGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
+        headGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+        defs.appendChild(headGradient);
 
-      const clefGradient = createSvgEl('linearGradient', {
-        id: 'noteClefGradient',
-        gradientUnits: 'userSpaceOnUse',
-        x1: clefX - clefWidth / 2,
-        y1: clefY - clefHeight / 2,
-        x2: clefX + clefWidth / 2,
-        y2: clefY + clefHeight / 2
-      });
-      clefGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
-      clefGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
-      clefGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
-      defs.appendChild(clefGradient);
-
-      const bevelGradient = createSvgEl('linearGradient', { id: 'noteBevelGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
-      bevelGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': '#ffffff', 'stop-opacity': '0.24' }));
-      bevelGradient.appendChild(createSvgEl('stop', { offset: '40%', 'stop-color': '#ffffff', 'stop-opacity': '0.08' }));
-      bevelGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
-      defs.appendChild(bevelGradient);
-
-      const speedGlowFilter = createSvgEl('filter', {
-        id: 'speedGlowFilter',
-        x: '-60%',
-        y: '-60%',
-        width: '220%',
-        height: '220%'
-      });
-      const glowPrimary = createSvgEl('feDropShadow', {
-        dx: '0',
-        dy: '0',
-        stdDeviation: layout.isMobile ? '4.8' : '4.2',
-        'flood-color': theme.accent,
-        'flood-opacity': layout.isMobile ? '0.88' : '0.8'
-      });
-      glowPrimary.appendChild(createSvgEl('animate', {
-        attributeName: 'stdDeviation',
-        values: layout.isMobile ? '3.2;6.8;3.2' : '2.8;5.8;2.8',
-        dur: '0.7s',
-        repeatCount: 'indefinite'
-      }));
-      glowPrimary.appendChild(createSvgEl('animate', {
-        attributeName: 'flood-opacity',
-        values: layout.isMobile ? '0.62;0.94;0.62' : '0.5;0.86;0.5',
-        dur: '0.7s',
-        repeatCount: 'indefinite'
-      }));
-      speedGlowFilter.appendChild(glowPrimary);
-      const glowSecondary = createSvgEl('feDropShadow', {
-        dx: '0',
-        dy: '0',
-        stdDeviation: layout.isMobile ? '2.8' : '2.3',
-        'flood-color': theme.accent2,
-        'flood-opacity': layout.isMobile ? '0.48' : '0.38'
-      });
-      glowSecondary.appendChild(createSvgEl('animate', {
-        attributeName: 'stdDeviation',
-        values: layout.isMobile ? '1.8;4.2;1.8' : '1.5;3.6;1.5',
-        dur: '0.7s',
-        repeatCount: 'indefinite'
-      }));
-      speedGlowFilter.appendChild(glowSecondary);
-      defs.appendChild(speedGlowFilter);
-
-      staffSvg.appendChild(defs);
-
-      for (let i = 0; i < 5; i++) {
-        const y = layout.topY + i * layout.lineGap;
-        const line = createSvgEl('line', {
-          x1: layout.left,
-          y1: y,
-          x2: layout.right,
-          y2: y,
-          stroke: staffLineColor,
-          'stroke-width': 2,
-          'stroke-linecap': 'round'
+        const clefGradient = createSvgEl('linearGradient', {
+          id: 'noteClefGradient',
+          gradientUnits: 'userSpaceOnUse',
+          x1: clefX - clefWidth / 2,
+          y1: clefY - clefHeight / 2,
+          x2: clefX + clefWidth / 2,
+          y2: clefY + clefHeight / 2
         });
-        applySpeedGlow(line, noteClass);
-        staffSvg.appendChild(line);
+        clefGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': theme.accent2 }));
+        clefGradient.appendChild(createSvgEl('stop', { offset: '52%', 'stop-color': theme.accent }));
+        clefGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': theme.bg3 }));
+        defs.appendChild(clefGradient);
+
+        const bevelGradient = createSvgEl('linearGradient', { id: 'noteBevelGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+        bevelGradient.appendChild(createSvgEl('stop', { offset: '0%', 'stop-color': '#ffffff', 'stop-opacity': '0.24' }));
+        bevelGradient.appendChild(createSvgEl('stop', { offset: '40%', 'stop-color': '#ffffff', 'stop-opacity': '0.08' }));
+        bevelGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
+        defs.appendChild(bevelGradient);
+
+        const speedGlowFilter = createSvgEl('filter', {
+          id: 'speedGlowFilter',
+          x: '-60%',
+          y: '-60%',
+          width: '220%',
+          height: '220%'
+        });
+        const glowPrimary = createSvgEl('feDropShadow', {
+          dx: '0',
+          dy: '0',
+          stdDeviation: layout.isMobile ? '4.8' : '4.2',
+          'flood-color': theme.accent,
+          'flood-opacity': layout.isMobile ? '0.88' : '0.8'
+        });
+        glowPrimary.appendChild(createSvgEl('animate', {
+          attributeName: 'stdDeviation',
+          values: layout.isMobile ? '3.2;6.8;3.2' : '2.8;5.8;2.8',
+          dur: '0.7s',
+          repeatCount: 'indefinite'
+        }));
+        glowPrimary.appendChild(createSvgEl('animate', {
+          attributeName: 'flood-opacity',
+          values: layout.isMobile ? '0.62;0.94;0.62' : '0.5;0.86;0.5',
+          dur: '0.7s',
+          repeatCount: 'indefinite'
+        }));
+        speedGlowFilter.appendChild(glowPrimary);
+        const glowSecondary = createSvgEl('feDropShadow', {
+          dx: '0',
+          dy: '0',
+          stdDeviation: layout.isMobile ? '2.8' : '2.3',
+          'flood-color': theme.accent2,
+          'flood-opacity': layout.isMobile ? '0.48' : '0.38'
+        });
+        glowSecondary.appendChild(createSvgEl('animate', {
+          attributeName: 'stdDeviation',
+          values: layout.isMobile ? '1.8;4.2;1.8' : '1.5;3.6;1.5',
+          dur: '0.7s',
+          repeatCount: 'indefinite'
+        }));
+        speedGlowFilter.appendChild(glowSecondary);
+        defs.appendChild(speedGlowFilter);
+
+        staffSvg.appendChild(defs);
+
+        const staticLayer = createSvgEl('g', { id: 'staffStaticLayer' });
+        for (let i = 0; i < 5; i++) {
+          const y = layout.topY + i * layout.lineGap;
+          const line = createSvgEl('line', {
+            x1: layout.left,
+            y1: y,
+            x2: layout.right,
+            y2: y,
+            stroke: staffLineColor,
+            'stroke-width': 2,
+            'stroke-linecap': 'round'
+          });
+          applySpeedGlow(line, noteClass);
+          staticLayer.appendChild(line);
+        }
+
+        appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, defs, theme, noteClass);
+
+        if (!layout.isMobile) {
+          const badge = createSvgEl('g');
+          badge.appendChild(createSvgEl('rect', {
+            x: 634,
+            y: 36,
+            width: 148,
+            height: 34,
+            rx: 17,
+            fill: 'rgba(255,255,255,0.07)',
+            stroke: 'rgba(255,255,255,0.1)'
+          }));
+          const badgeText = createSvgEl('text', {
+            x: 708,
+            y: 58,
+            'text-anchor': 'middle',
+            fill: 'rgba(238,243,255,0.92)',
+            'font-size': 14,
+            'font-weight': 700
+          });
+          badgeText.textContent = note.clef === 'treble' ? 'Violinschluessel' : 'Bassschluessel';
+          badge.appendChild(badgeText);
+          staticLayer.appendChild(badge);
+        }
+
+        staffSvg.appendChild(staticLayer);
+        staffSvg.appendChild(state.staffNoteLayer);
       }
 
-      appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, defs, theme, noteClass);
-
+      state.staffNoteLayer.innerHTML = '';
+      const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
       const y = yFromStaffStep(note.staffStep);
       const staffTop = layout.topY;
       const staffBottom = layout.topY + 4 * layout.lineGap;
@@ -2766,7 +2870,7 @@
           'stroke-linecap': 'round'
         });
         applySpeedGlow(ledger, noteClass);
-        staffSvg.appendChild(ledger);
+        state.staffNoteLayer.appendChild(ledger);
       });
 
       const shadow = createSvgEl('ellipse', {
@@ -2843,36 +2947,12 @@
       stemOverlay.setAttribute('stroke-linecap', 'round');
       applySpeedGlow(stemOverlay, noteClass);
 
-      staffSvg.appendChild(shadow);
-      staffSvg.appendChild(stemShadow);
-      staffSvg.appendChild(stem);
-      staffSvg.appendChild(stemOverlay);
-      staffSvg.appendChild(head);
-      staffSvg.appendChild(bevel);
-
-      if (!layout.isMobile) {
-        const badge = createSvgEl('g');
-        badge.appendChild(createSvgEl('rect', {
-          x: 634,
-          y: 36,
-          width: 148,
-          height: 34,
-          rx: 17,
-          fill: 'rgba(255,255,255,0.07)',
-          stroke: 'rgba(255,255,255,0.1)'
-        }));
-        const badgeText = createSvgEl('text', {
-          x: 708,
-          y: 58,
-          'text-anchor': 'middle',
-          fill: 'rgba(238,243,255,0.92)',
-          'font-size': 14,
-          'font-weight': 700
-        });
-        badgeText.textContent = note.clef === 'treble' ? 'Violinschluessel' : 'Bassschluessel';
-        badge.appendChild(badgeText);
-        staffSvg.appendChild(badge);
-      }
+      state.staffNoteLayer.appendChild(shadow);
+      state.staffNoteLayer.appendChild(stemShadow);
+      state.staffNoteLayer.appendChild(stem);
+      state.staffNoteLayer.appendChild(stemOverlay);
+      state.staffNoteLayer.appendChild(head);
+      state.staffNoteLayer.appendChild(bevel);
     }
 
     function getNoteVisualPoint(note) {
@@ -3069,17 +3149,19 @@
     function playToneFallback(freq, duration, type, volume) {
       try {
         const uri = createToneWaveUri(freq, duration, type, volume * DEFAULT_AUDIO_GAIN);
-        const audio = new Audio(uri);
-        audio.preload = 'auto';
-        audio.playsInline = true;
-        fallbackAudioPlayers.push(audio);
-        const cleanup = () => {
-          const index = fallbackAudioPlayers.indexOf(audio);
-          if (index >= 0) fallbackAudioPlayers.splice(index, 1);
-        };
-        audio.addEventListener('ended', cleanup, { once: true });
-        audio.addEventListener('error', cleanup, { once: true });
-        audio.play().catch(cleanup);
+        if (state.fallbackAudioPool.length < AUDIO_POOL_SIZE) {
+          const pooled = new Audio();
+          pooled.preload = 'auto';
+          pooled.playsInline = true;
+          state.fallbackAudioPool.push(pooled);
+        }
+        const poolSize = Math.max(1, state.fallbackAudioPool.length);
+        const audio = state.fallbackAudioPool[state.fallbackAudioCursor % poolSize];
+        state.fallbackAudioCursor = (state.fallbackAudioCursor + 1) % AUDIO_POOL_SIZE;
+        audio.pause();
+        audio.src = uri;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
       } catch (_) {}
     }
 
@@ -3138,10 +3220,16 @@
     }
 
     function scheduleAudio(delayMs, callback) {
-      if (delayMs > 0) {
-        setTimeout(callback, delayMs);
-      } else {
+      const audioPriority = arguments.length > 2 ? arguments[2] : 0;
+      const token = arguments.length > 3 ? arguments[3] : state.audioPriorityToken;
+      const run = () => {
+        if (!canPlayAudioPriority(audioPriority, token)) return;
         callback();
+      };
+      if (delayMs > 0) {
+        setTimeout(run, delayMs);
+      } else {
+        run();
       }
     }
 
@@ -3158,6 +3246,7 @@
 
     function playSpeedStepSound(streak, tierLevel = 0, loopLevel = 0) {
       if (!state.audioEnabled || streak <= 0) return;
+      claimAudioPriority(3, 520);
       const freq = getSpeedStepFrequency(streak);
       const accent = Math.min(0.034, 0.024 + tierLevel * 0.0015 + Math.min(loopLevel, 4) * 0.001);
       playTone(freq, 0.11, 'triangle', accent);
@@ -3170,47 +3259,62 @@
     function playLevelUpSound(startDelayMs = 0) {
       if (!state.audioEnabled) return;
       const run = [659.25, 784, 1046.5, 1318.5];
+      const token = claimAudioPriority(2, startDelayMs + 760);
       scheduleAudio(startDelayMs, () => {
         run.forEach((freq, index) => {
           setTimeout(() => {
+            if (!canPlayAudioPriority(2, token)) return;
             playTone(freq, 0.18, 'triangle', 0.032);
             playTone(freq * 2, 0.12, 'sine', 0.01);
           }, index * 86);
         });
-        setTimeout(() => playTone(1567.98, 0.32, 'triangle', 0.024), 330);
-      });
+        setTimeout(() => {
+          if (!canPlayAudioPriority(2, token)) return;
+          playTone(1567.98, 0.32, 'triangle', 0.024);
+        }, 330);
+      }, 2, token);
     }
 
     function playMissionClearSound(startDelayMs = 0) {
       if (!state.audioEnabled) return;
+      const token = claimAudioPriority(1, startDelayMs + 560);
       scheduleAudio(startDelayMs, () => {
         const run = [587.33, 783.99, 987.77, 1174.66];
         run.forEach((freq, index) => {
           setTimeout(() => {
+            if (!canPlayAudioPriority(1, token)) return;
             playTone(freq, 0.12, 'triangle', 0.026);
             playTone(freq * 1.5, 0.08, 'sine', 0.008);
           }, index * 58);
         });
-        setTimeout(() => playTone(1396.91, 0.18, 'triangle', 0.022), 250);
-      });
+        setTimeout(() => {
+          if (!canPlayAudioPriority(1, token)) return;
+          playTone(1396.91, 0.18, 'triangle', 0.022);
+        }, 250);
+      }, 1, token);
     }
 
     function playSpeedSound(tierLevel = 1, loopLevel = 0, startDelayMs = 0) {
       if (!state.audioEnabled) return;
+      const token = claimAudioPriority(3, startDelayMs + 720);
       scheduleAudio(startDelayMs, () => {
         const base = 820 + (tierLevel - 1) * 62 + Math.min(loopLevel, 10) * 26;
         const intervals = [1, 1.25, 1.5, 1.78, 2.0, 2.38, 2.66];
         const tones = Math.min(intervals.length, 3 + Math.min(loopLevel, 4));
         for (let index = 0; index < tones; index++) {
           setTimeout(() => {
+            if (!canPlayAudioPriority(3, token)) return;
             playTone(base * intervals[index], index >= 4 ? 0.12 : 0.09, 'triangle', 0.028 - index * 0.002);
             if (loopLevel >= 2 && index % 2 === 1) playTone(base * intervals[index] * 2, 0.06, 'sine', 0.007);
           }, index * 58);
         }
         if (loopLevel > 0) {
-          setTimeout(() => playTone(base * 3, 0.18, 'triangle', 0.02), tones * 58);
+          setTimeout(() => {
+            if (!canPlayAudioPriority(3, token)) return;
+            playTone(base * 3, 0.18, 'triangle', 0.02);
+          }, tones * 58);
         }
-      });
+      }, 3, token);
     }
 
     function playGameOverSound() {
