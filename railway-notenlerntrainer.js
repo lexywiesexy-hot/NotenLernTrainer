@@ -31,7 +31,7 @@ function sendFile(res, filePath) {
       headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate';
       headers.Pragma = 'no-cache';
       headers.Expires = '0';
-      headers.Surrogate-Control = 'no-store';
+      headers['Surrogate-Control'] = 'no-store';
     }
 
     res.writeHead(200, headers);
