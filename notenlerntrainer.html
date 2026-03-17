@@ -1353,10 +1353,6 @@
           </label>
         </div>
 
-        <div class="menu-section">
-          <div class="menu-label">Themes</div>
-          <div class="theme-grid" id="themeGrid"></div>
-        </div>
       </div>
     </aside>
 
@@ -1453,7 +1449,27 @@
     const TREBLE_CLEF = '\uD834\uDD1E';
     const BASS_CLEF = '\uD834\uDD22';
     const DEFAULT_MASTERY = 0;
-    const THEME_IDS = ['aurora', 'sunset', 'mint', 'brass', 'neon'];
+    const DEFAULT_AUDIO_GAIN = 0.5;
+    const THEME_IDS = ['aurora', 'sunset', 'mint', 'brass', 'neon', 'violet', 'ember', 'lagoon', 'rose', 'glacier', 'copper', 'orchid', 'midnight', 'citrus', 'storm'];
+    const NOTE_POOL_CACHE = new Map();
+    const CLEF_VECTORS = {
+      treble: {
+        path: 'M602 978 659 695Q668 696 677 696Q686 696 694 696Q772 696 838 665.5Q904 635 952 584.5Q1000 534 1026.5 468.5Q1053 403 1053 333Q1053 276 1035.5 223.5Q1018 171 984.5 127.5Q951 84 903 51.5Q855 19 794 3L828 -174Q830 -188 831.5 -200.5Q833 -213 833 -227Q833 -279 814.5 -325Q796 -371 763.5 -406Q731 -441 688 -461.5Q645 -482 596 -482Q551 -482 508 -468.5Q465 -455 431.5 -430.5Q398 -406 377.5 -370Q357 -334 357 -289Q357 -246 381.5 -212.5Q406 -179 462 -171Q467 -170 472.5 -169.5Q478 -169 483 -169Q511 -169 534 -180.5Q557 -192 573.5 -211Q590 -230 598.5 -253.5Q607 -277 607 -302Q607 -335 590 -366Q573 -397 536 -414Q550 -419 563 -420.5Q576 -422 590 -422Q628 -422 658.5 -406.5Q689 -391 710 -365Q731 -339 742.5 -303.5Q754 -268 754 -227Q754 -215 751.5 -194Q749 -173 747 -161L718 -11Q691 -18 647 -18Q548 -18 451.5 3Q355 24 277.5 75Q200 126 149 210.5Q98 295 91 422Q90 432 90 442Q90 452 90 462Q90 556 116 646.5Q142 737 199 815Q265 901 342 962Q419 1023 513 1073Q498 1149 487.5 1204Q477 1259 470 1297.5Q463 1336 459 1361Q455 1386 452.5 1402Q450 1418 449.5 1428Q449 1438 449 1447Q449 1485 460 1519.5Q471 1554 492 1580.5Q513 1607 543.5 1623Q574 1639 613 1639Q661 1639 698 1616.5Q735 1594 759.5 1559Q784 1524 796.5 1481Q809 1438 809 1397Q809 1338 790.5 1280Q772 1222 742.5 1168Q713 1114 676 1065.5Q639 1017 602 978ZM629 1485Q597 1485 578.5 1471.5Q560 1458 550.5 1440Q541 1422 538.5 1403.5Q536 1385 536 1375Q536 1302 550 1238Q564 1174 575 1113Q613 1135 641.5 1164.5Q670 1194 689 1227Q708 1260 717.5 1294Q727 1328 727 1358Q727 1380 722.5 1403Q718 1426 707 1444Q696 1462 677 1473.5Q658 1485 629 1485ZM705 55 619 513Q581 504 552.5 482.5Q524 461 505 431.5Q486 402 476.5 367.5Q467 333 467 298Q467 285 468.5 272Q470 259 472 247Q425 269 401 309Q377 349 377 398Q377 447 394 491Q411 535 440.5 571Q470 607 508.5 634Q547 661 590 677Q579 735 569 785L543 918Q473 852 404 786.5Q335 721 271 646Q250 621 230 594Q210 567 195 537.5Q180 508 171 476.5Q162 445 162 411Q163 341 184.5 287.5Q206 234 242 193.5Q278 153 325.5 125.5Q373 98 425 81Q477 64 530.5 56.5Q584 49 632 49Q669 49 705 55ZM691 520 779 75Q824 87 858 112.5Q892 138 914.5 171Q937 204 948 241.5Q959 279 959 316Q959 374 935.5 413Q912 452 874 476Q836 500 788 510Q740 520 691 520Z',
+        xMin: 90,
+        yMin: -482,
+        xMax: 1053,
+        yMax: 1639,
+        anchorYOffset: 0
+      },
+      bass: {
+        path: 'M275 999Q285 1007 299 1013Q311 1018 328.5 1022.5Q346 1027 369 1027Q403 1027 429.5 1014.5Q456 1002 474.5 981Q493 960 503 932.5Q513 905 513 876Q513 841 499.5 812.5Q486 784 464 764Q442 744 414 733.5Q386 723 356 723Q311 723 265 745Q219 767 181.5 810Q144 853 120 916.5Q96 980 96 1062Q96 1171 133.5 1252Q171 1333 234.5 1385.5Q298 1438 381 1464Q464 1490 554 1490Q658 1490 744.5 1458.5Q831 1427 893.5 1364.5Q956 1302 990.5 1208Q1025 1114 1025 988Q1025 865 997.5 765Q970 665 922 585Q874 505 809.5 444Q745 383 672 338Q599 293 521 262.5Q443 232 367 214Q291 196 221.5 188Q152 180 96 180V318Q137 318 191.5 322.5Q246 327 307 340Q368 353 432 375Q496 397 557 432Q618 467 672 516Q726 565 767 632Q808 699 831.5 784.5Q855 870 855 978Q855 1083 830.5 1155Q806 1227 764.5 1271Q723 1315 668.5 1334Q614 1353 554 1353Q500 1353 448 1338Q396 1323 355.5 1289Q315 1255 290.5 1199Q266 1143 266 1062Q266 1048 267 1036.5Q268 1025 270 1017Q272 1007 275 999ZM1223 1024Q1177 1024 1144.5 1057Q1112 1090 1112 1136Q1112 1182 1144.5 1214Q1177 1246 1223 1246Q1270 1246 1303 1214Q1336 1182 1336 1136Q1336 1090 1303 1057Q1270 1024 1223 1024ZM1223 580Q1177 580 1144.5 613Q1112 646 1112 692Q1112 738 1144.5 771.5Q1177 805 1223 805Q1270 805 1303 771.5Q1336 738 1336 692Q1336 646 1303 613Q1270 580 1223 580Z',
+        xMin: 96,
+        yMin: 180,
+        xMax: 1336,
+        yMax: 1490,
+        anchorYOffset: 79
+      }
+    };
     const SPEED_TIERS = [
       { level: 0, threshold: 0, name: 'Calm', unlockXp: 0, fastChainXp: 0, lifeReward: 0, durationText: '' },
       { level: 1, threshold: 3, name: 'Spark', unlockXp: 1, fastChainXp: 0, lifeReward: 0, durationText: '+1 XP' },
@@ -1538,6 +1554,156 @@
         accent2: '#6ef0ff',
         good: '#9ff4d2',
         bad: '#ffb7da'
+      },
+      violet: {
+        name: 'Violet Bloom',
+        bg1: '#140d22',
+        bg2: '#312050',
+        bg3: '#5a3a8f',
+        panel: 'rgba(247,241,255,0.08)',
+        panelStrong: 'rgba(20,12,34,0.82)',
+        border: 'rgba(233,219,255,0.16)',
+        text: '#f8f0ff',
+        muted: '#c9b4ec',
+        accent: '#b98cff',
+        accent2: '#8fe3ff',
+        good: '#b8f5d6',
+        bad: '#ffbfd9'
+      },
+      ember: {
+        name: 'Ember Glow',
+        bg1: '#1b0d09',
+        bg2: '#472016',
+        bg3: '#8d4321',
+        panel: 'rgba(255,244,236,0.08)',
+        panelStrong: 'rgba(28,14,8,0.84)',
+        border: 'rgba(255,215,187,0.16)',
+        text: '#fff3ea',
+        muted: '#e1b89c',
+        accent: '#ff9e57',
+        accent2: '#ffd18a',
+        good: '#b8f3cb',
+        bad: '#ffb6a4'
+      },
+      lagoon: {
+        name: 'Lagoon Mist',
+        bg1: '#07161c',
+        bg2: '#123643',
+        bg3: '#1d6576',
+        panel: 'rgba(238,252,255,0.08)',
+        panelStrong: 'rgba(8,20,24,0.82)',
+        border: 'rgba(203,244,255,0.16)',
+        text: '#eefcff',
+        muted: '#9ecdda',
+        accent: '#5bd2d8',
+        accent2: '#9ee8ff',
+        good: '#aef5d3',
+        bad: '#ffc2d0'
+      },
+      rose: {
+        name: 'Rose Velvet',
+        bg1: '#1d0d16',
+        bg2: '#4c1c36',
+        bg3: '#87405f',
+        panel: 'rgba(255,241,247,0.08)',
+        panelStrong: 'rgba(26,11,20,0.82)',
+        border: 'rgba(255,213,230,0.16)',
+        text: '#fff1f7',
+        muted: '#e0b0c4',
+        accent: '#ff8bb5',
+        accent2: '#ffd0e2',
+        good: '#b7f0d3',
+        bad: '#ffb0bd'
+      },
+      glacier: {
+        name: 'Glacier Light',
+        bg1: '#09121d',
+        bg2: '#17304a',
+        bg3: '#2d5d86',
+        panel: 'rgba(243,249,255,0.08)',
+        panelStrong: 'rgba(10,16,24,0.82)',
+        border: 'rgba(214,233,255,0.16)',
+        text: '#f3f9ff',
+        muted: '#a9c2de',
+        accent: '#8dbdff',
+        accent2: '#b9efff',
+        good: '#b0f2d6',
+        bad: '#ffc0ca'
+      },
+      copper: {
+        name: 'Copper Dust',
+        bg1: '#17100d',
+        bg2: '#3f271c',
+        bg3: '#78503b',
+        panel: 'rgba(255,246,240,0.08)',
+        panelStrong: 'rgba(24,15,11,0.82)',
+        border: 'rgba(242,221,206,0.15)',
+        text: '#fff4ee',
+        muted: '#d2b8a8',
+        accent: '#d9976d',
+        accent2: '#f4d1a5',
+        good: '#b8f0d1',
+        bad: '#ffc1b0'
+      },
+      orchid: {
+        name: 'Orchid Haze',
+        bg1: '#170d1f',
+        bg2: '#3a1e4b',
+        bg3: '#70428a',
+        panel: 'rgba(250,242,255,0.08)',
+        panelStrong: 'rgba(22,12,28,0.82)',
+        border: 'rgba(233,214,255,0.16)',
+        text: '#fbf1ff',
+        muted: '#d1b1e8',
+        accent: '#d08cff',
+        accent2: '#ffb7e6',
+        good: '#b5f3d3',
+        bad: '#ffb7d2'
+      },
+      midnight: {
+        name: 'Midnight Pulse',
+        bg1: '#080b18',
+        bg2: '#151d3d',
+        bg3: '#273a72',
+        panel: 'rgba(240,245,255,0.08)',
+        panelStrong: 'rgba(8,10,20,0.84)',
+        border: 'rgba(211,222,255,0.14)',
+        text: '#eff4ff',
+        muted: '#9fb0de',
+        accent: '#7ea0ff',
+        accent2: '#87e2ff',
+        good: '#a9f0d1',
+        bad: '#ffbed3'
+      },
+      citrus: {
+        name: 'Citrus Pop',
+        bg1: '#151707',
+        bg2: '#394313',
+        bg3: '#667a20',
+        panel: 'rgba(250,255,238,0.08)',
+        panelStrong: 'rgba(18,22,8,0.82)',
+        border: 'rgba(230,245,199,0.16)',
+        text: '#f8ffeb',
+        muted: '#c7d79a',
+        accent: '#d7f05a',
+        accent2: '#fff29b',
+        good: '#baf2c7',
+        bad: '#ffc6a7'
+      },
+      storm: {
+        name: 'Storm Signal',
+        bg1: '#0c1218',
+        bg2: '#1f2f3e',
+        bg3: '#405d72',
+        panel: 'rgba(243,250,255,0.08)',
+        panelStrong: 'rgba(11,17,22,0.82)',
+        border: 'rgba(214,230,242,0.15)',
+        text: '#f1f8ff',
+        muted: '#b0c2d2',
+        accent: '#8eb6d6',
+        accent2: '#d6edf8',
+        good: '#b5efd0',
+        bad: '#ffc0c4'
       }
     };
 
@@ -1609,7 +1775,6 @@
     const missionCount = document.getElementById('missionCount');
     const masteryGrid = document.getElementById('masteryGrid');
     const masterySummary = document.getElementById('masterySummary');
-    const themeGrid = document.getElementById('themeGrid');
     const themeName = document.getElementById('themeName');
     const modePill = document.getElementById('modePill');
 
@@ -1649,6 +1814,7 @@
       speedTimer: null,
       comboTimer: null,
       nextRoundTimeout: null,
+      saveTimer: null,
       roundLocked: false,
       audioPriorityDelayMs: 0,
       extraLedgerLines: 2,
@@ -1770,15 +1936,21 @@
 
     function choosePool() {
       const extraLines = clampNumber(Number(state.extraLedgerLines) || 0, 0, 5);
+      const cacheKey = `${state.mode}|${extraLines}`;
+      if (NOTE_POOL_CACHE.has(cacheKey)) return NOTE_POOL_CACHE.get(cacheKey);
       const trebleMinStep = 2 - (extraLines * 2);
       const trebleMaxStep = 10 + (extraLines * 2);
       const bassMinStep = 2 - (extraLines * 2);
       const bassMaxStep = 10 + (extraLines * 2);
       const treblePool = TREBLE_NOTES_ALL.filter(note => note.staffStep >= trebleMinStep && note.staffStep <= trebleMaxStep);
       const bassPool = BASS_NOTES_ALL.filter(note => note.staffStep >= bassMinStep && note.staffStep <= bassMaxStep);
-      if (state.mode === 'treble') return treblePool.slice();
-      if (state.mode === 'bass') return bassPool.slice();
-      return [...treblePool, ...bassPool];
+      const pool = state.mode === 'treble'
+        ? treblePool
+        : state.mode === 'bass'
+          ? bassPool
+          : [...treblePool, ...bassPool];
+      NOTE_POOL_CACHE.set(cacheKey, pool);
+      return pool;
     }
 
     function getAverageMastery() {
@@ -1794,7 +1966,7 @@
       return weakest;
     }
 
-    function saveProgress() {
+    function persistProgressNow() {
       const persisted = {
         mode: state.mode,
         difficulty: state.difficulty,
@@ -1814,6 +1986,21 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
       } catch (_) {}
+    }
+
+    function saveProgress(immediate = false) {
+      if (state.saveTimer) {
+        clearTimeout(state.saveTimer);
+        state.saveTimer = null;
+      }
+      if (immediate) {
+        persistProgressNow();
+        return;
+      }
+      state.saveTimer = window.setTimeout(() => {
+        state.saveTimer = null;
+        persistProgressNow();
+      }, 140);
     }
 
     function loadProgress() {
@@ -1962,9 +2149,16 @@
     }
 
     // Golden-ratio drift keeps each level feeling fresh without falling into an obvious short loop.
-    function getProceduralTheme(themeId = state.selectedTheme, level = state.level) {
-      const base = THEMES[themeId] || THEMES.aurora;
-      const themeIndex = Math.max(0, THEME_IDS.indexOf(themeId));
+    function getLevelThemeId(level = state.level) {
+      const normalizedLevel = Math.max(1, Math.floor(level || 1));
+      const themeIndex = Math.floor((normalizedLevel - 1) / 2) % THEME_IDS.length;
+      return THEME_IDS[themeIndex] || 'aurora';
+    }
+
+    function getProceduralTheme(themeId, level = state.level) {
+      const resolvedThemeId = themeId || getLevelThemeId(level);
+      const base = THEMES[resolvedThemeId] || THEMES.aurora;
+      const themeIndex = Math.max(0, THEME_IDS.indexOf(resolvedThemeId));
       const seed = (level * 0.754877666) + (themeIndex * 0.618033989) + 0.314159265;
       const drift = (multiplier, spread) => (fract(seed * multiplier) - 0.5) * spread;
       const accentBase = hexToHsl(base.accent);
@@ -2044,7 +2238,9 @@
     }
 
     function applyTheme() {
-      const theme = getProceduralTheme(state.selectedTheme, state.level);
+      const themeId = getLevelThemeId(state.level);
+      state.selectedTheme = themeId;
+      const theme = getProceduralTheme(themeId, state.level);
       state.activeTheme = theme;
       const root = document.documentElement.style;
       root.setProperty('--bg1', theme.bg1);
@@ -2064,46 +2260,6 @@
       root.setProperty('--good-rgb', hexToRgbString(theme.good));
       root.setProperty('--bad-rgb', hexToRgbString(theme.bad));
       if (themeName) themeName.textContent = `${theme.name} · Level ${state.level}`;
-      renderThemeButtons();
-    }
-
-    function getThemeUnlockHint(themeId) {
-      if (themeId === 'aurora') return 'Standard';
-      if (themeId === 'sunset') return 'Ab Level 3';
-      if (themeId === 'mint') return '1x Perfect Round';
-      if (themeId === 'brass') return '1x Boss Clear';
-      if (themeId === 'neon') return '4 Missionen';
-      return '';
-    }
-
-    function renderThemeButtons() {
-      themeGrid.innerHTML = '';
-      for (const themeId of THEME_IDS) {
-        const theme = THEMES[themeId];
-        const unlocked = state.unlockedThemes.includes(themeId);
-        const button = document.createElement('button');
-        button.className = `theme-btn${state.selectedTheme === themeId ? ' active' : ''}`;
-        button.type = 'button';
-        button.disabled = !unlocked;
-        button.innerHTML = `
-          <div class="theme-topline">
-            <span>${theme.name}</span>
-            <span class="theme-swatch">
-              <span style="background:${theme.accent}"></span>
-              <span style="background:${theme.accent2}"></span>
-            </span>
-          </div>
-          <div class="theme-hint">${unlocked ? 'Aktivieren' : getThemeUnlockHint(themeId)}</div>
-        `;
-        button.addEventListener('click', () => {
-          if (!state.unlockedThemes.includes(themeId)) return;
-          state.selectedTheme = themeId;
-          applyTheme();
-          drawCurrentState();
-          saveProgress();
-        });
-        themeGrid.appendChild(button);
-      }
     }
 
     function showToast(title, subtitle = '', variant = 'good') {
@@ -2134,21 +2290,8 @@
       state.nextRoundTimeout = null;
     }
 
-    function unlockTheme(themeId, reasonText) {
-      if (state.unlockedThemes.includes(themeId)) return false;
-      state.unlockedThemes.push(themeId);
-      state.selectedTheme = themeId;
-      applyTheme();
-      showToast('Theme freigeschaltet', `${THEMES[themeId].name} · ${reasonText}`, 'perfect');
-      saveProgress();
-      return true;
-    }
-
     function maybeUnlockThemes() {
-      if (state.level >= 3) unlockTheme('sunset', 'ab Level 3');
-      if (state.perfectRounds >= 1) unlockTheme('mint', 'durch Perfect Round');
-      if (state.bossClears >= 1) unlockTheme('brass', 'durch Boss Clear');
-      if (state.missionsCompleted >= 4) unlockTheme('neon', 'durch 4 Missionen');
+      return false;
     }
 
     function setFeedback(text, type = '') {
@@ -2256,6 +2399,7 @@
     }
 
     function updateStats() {
+      const isCompactViewport = window.innerWidth <= 760;
       const speedStatus = getCurrentSpeedStatus();
       const speedTier = speedStatus.tier;
       levelCount.textContent = state.level;
@@ -2278,7 +2422,7 @@
       updateCurrentAverageTime();
       updateBossBanner();
       renderMission();
-      renderMastery();
+      if (!isCompactViewport) renderMastery();
     }
 
     function getStaffLayout() {
@@ -2393,6 +2537,47 @@
       return el;
     }
 
+    function applySpeedGlow(el, noteClass = '') {
+      if (!el) return;
+      if (state.speedActive) el.setAttribute('filter', 'url(#speedGlowFilter)');
+      if (noteClass) el.setAttribute('class', noteClass);
+    }
+
+    function appendClefVector(kind, x, y, width, height, noteClass = '') {
+      const vector = CLEF_VECTORS[kind];
+      if (!vector) return;
+      const boxX = x - (width / 2);
+      const boxY = y - (height / 2);
+      const glyphWidth = vector.xMax - vector.xMin;
+      const glyphHeight = vector.yMax - vector.yMin;
+      const scale = Math.min(width / glyphWidth, height / glyphHeight);
+      const scaledWidth = glyphWidth * scale;
+      const scaledHeight = glyphHeight * scale;
+      const padX = (width - scaledWidth) / 2;
+      const padY = (height - scaledHeight) / 2;
+      const translateX = boxX + padX - (vector.xMin * scale);
+      const translateY = boxY + padY + (vector.yMax * scale) + ((vector.anchorYOffset || 0) * scale);
+
+      const buildPath = (dx, dy, fill, opacity = '1') => {
+        const path = createSvgEl('path', {
+          d: vector.path,
+          fill,
+          opacity,
+          transform: `translate(${(translateX + dx).toFixed(2)} ${(translateY + dy).toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})`
+        });
+        if (fill === 'url(#noteClefGradient)') {
+          path.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+          path.setAttribute('stroke-width', Math.max(1, scale * 18).toFixed(2));
+          path.setAttribute('paint-order', 'stroke fill');
+        }
+        applySpeedGlow(path, noteClass);
+        return path;
+      };
+
+      staffSvg.appendChild(buildPath(3, 3, 'rgba(0,0,0,0.18)', '0.95'));
+      staffSvg.appendChild(buildPath(0, 0, 'url(#noteClefGradient)'));
+    }
+
     function drawStaff(note) {
       if (!note) return;
       staffSvg.innerHTML = '';
@@ -2412,10 +2597,6 @@
       const clefHeight = note.clef === 'treble'
         ? layout.clefHeightTreble
         : layout.clefHeightBass;
-      const clefFontFamily = isIOS
-        ? '"Times New Roman", "Georgia", serif'
-        : 'Georgia, Times New Roman, serif';
-      const clefStrokeWidth = isIOS ? '0.4' : '0.65';
       updateStaffViewBox(note, layout);
       const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
       const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
@@ -2445,6 +2626,49 @@
       bevelGradient.appendChild(createSvgEl('stop', { offset: '100%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
       defs.appendChild(bevelGradient);
 
+      const speedGlowFilter = createSvgEl('filter', {
+        id: 'speedGlowFilter',
+        x: '-60%',
+        y: '-60%',
+        width: '220%',
+        height: '220%'
+      });
+      const glowPrimary = createSvgEl('feDropShadow', {
+        dx: '0',
+        dy: '0',
+        stdDeviation: layout.isMobile ? '4.8' : '4.2',
+        'flood-color': theme.accent,
+        'flood-opacity': layout.isMobile ? '0.88' : '0.8'
+      });
+      glowPrimary.appendChild(createSvgEl('animate', {
+        attributeName: 'stdDeviation',
+        values: layout.isMobile ? '3.2;6.8;3.2' : '2.8;5.8;2.8',
+        dur: '0.7s',
+        repeatCount: 'indefinite'
+      }));
+      glowPrimary.appendChild(createSvgEl('animate', {
+        attributeName: 'flood-opacity',
+        values: layout.isMobile ? '0.62;0.94;0.62' : '0.5;0.86;0.5',
+        dur: '0.7s',
+        repeatCount: 'indefinite'
+      }));
+      speedGlowFilter.appendChild(glowPrimary);
+      const glowSecondary = createSvgEl('feDropShadow', {
+        dx: '0',
+        dy: '0',
+        stdDeviation: layout.isMobile ? '2.8' : '2.3',
+        'flood-color': theme.accent2,
+        'flood-opacity': layout.isMobile ? '0.48' : '0.38'
+      });
+      glowSecondary.appendChild(createSvgEl('animate', {
+        attributeName: 'stdDeviation',
+        values: layout.isMobile ? '1.8;4.2;1.8' : '1.5;3.6;1.5',
+        dur: '0.7s',
+        repeatCount: 'indefinite'
+      }));
+      speedGlowFilter.appendChild(glowSecondary);
+      defs.appendChild(speedGlowFilter);
+
       staffSvg.appendChild(defs);
 
       for (let i = 0; i < 5; i++) {
@@ -2458,40 +2682,11 @@
           'stroke-width': 2,
           'stroke-linecap': 'round'
         });
-        if (noteClass) line.setAttribute('class', noteClass);
+        applySpeedGlow(line, noteClass);
         staffSvg.appendChild(line);
       }
 
-      const clefShadow = createSvgEl('text', {
-        x: clefX + 3,
-        y: clefY + 3,
-        fill: 'rgba(0,0,0,0.18)',
-        'font-size': note.clef === 'treble'
-          ? layout.trebleClefFontSize
-          : layout.bassClefFontSize,
-        'font-family': clefFontFamily,
-        'dominant-baseline': 'middle'
-      });
-      clefShadow.textContent = note.clef === 'treble' ? TREBLE_CLEF : BASS_CLEF;
-      if (noteClass) clefShadow.setAttribute('class', noteClass);
-      staffSvg.appendChild(clefShadow);
-
-      const clef = createSvgEl('text', {
-        x: clefX,
-        y: clefY,
-        fill: 'url(#noteClefGradient)',
-        'font-size': note.clef === 'treble'
-          ? layout.trebleClefFontSize
-          : layout.bassClefFontSize,
-        'font-family': clefFontFamily,
-        'dominant-baseline': 'middle',
-        stroke: 'rgba(255,255,255,0.08)',
-        'stroke-width': clefStrokeWidth,
-        'paint-order': 'stroke fill'
-      });
-      clef.textContent = note.clef === 'treble' ? TREBLE_CLEF : BASS_CLEF;
-      if (noteClass) clef.setAttribute('class', noteClass);
-      staffSvg.appendChild(clef);
+      appendClefVector(note.clef, clefX, clefY, clefWidth, clefHeight, noteClass);
 
       const y = yFromStaffStep(note.staffStep);
       const staffTop = layout.topY;
@@ -2514,7 +2709,7 @@
           'stroke-width': 2.5,
           'stroke-linecap': 'round'
         });
-        if (noteClass) ledger.setAttribute('class', noteClass);
+        applySpeedGlow(ledger, noteClass);
         staffSvg.appendChild(ledger);
       });
 
@@ -2526,7 +2721,7 @@
         transform: `rotate(-20 ${layout.noteX + shadowOffset} ${y + shadowOffset})`,
         fill: 'rgba(0,0,0,0.18)'
       });
-      if (noteClass) shadow.setAttribute('class', noteClass);
+      applySpeedGlow(shadow, noteClass);
 
       const head = createSvgEl('ellipse', {
         cx: layout.noteX,
@@ -2538,7 +2733,7 @@
         stroke: 'rgba(255,255,255,0.20)',
         'stroke-width': 1.25
       });
-      if (noteClass) head.setAttribute('class', noteClass);
+      applySpeedGlow(head, noteClass);
 
       const bevel = createSvgEl('ellipse', {
         cx: layout.noteX - bevelOffsetX,
@@ -2549,7 +2744,7 @@
         fill: 'url(#noteBevelGradient)',
         opacity: '0.9'
       });
-      if (noteClass) bevel.setAttribute('class', noteClass);
+      applySpeedGlow(bevel, noteClass);
 
       const stemUp = y > (layout.topY + layout.lineGap * 2.1);
       const stemX = stemUp ? layout.noteX + stemOffset : layout.noteX - stemOffset;
@@ -2574,7 +2769,7 @@
       stemShadow.setAttribute('stroke', 'rgba(0,0,0,0.18)');
       stemShadow.setAttribute('stroke-width', layout.isMobile ? '5.2' : '3.5');
       stemShadow.setAttribute('stroke-linecap', 'round');
-      if (noteClass) stemShadow.setAttribute('class', noteClass);
+      applySpeedGlow(stemShadow, noteClass);
 
       const stem = createSvgEl('line', stemUp
         ? { x1: layout.noteX + stemOffset, y1: y - 2, x2: layout.noteX + stemOffset, y2: y - layout.stemLen }
@@ -2582,7 +2777,7 @@
       stem.setAttribute('stroke', 'url(#noteStemGradient)');
       stem.setAttribute('stroke-width', layout.isMobile ? '6' : '3.15');
       stem.setAttribute('stroke-linecap', 'round');
-      if (noteClass) stem.setAttribute('class', noteClass);
+      applySpeedGlow(stem, noteClass);
 
       const stemOverlay = createSvgEl('line', stemUp
         ? { x1: layout.noteX + stemOffset + 0.35, y1: y - 4, x2: layout.noteX + stemOffset + 0.35, y2: y - layout.stemLen + 4 }
@@ -2590,7 +2785,7 @@
       stemOverlay.setAttribute('stroke', 'rgba(255,255,255,0.16)');
       stemOverlay.setAttribute('stroke-width', layout.isMobile ? '1.3' : '0.95');
       stemOverlay.setAttribute('stroke-linecap', 'round');
-      if (noteClass) stemOverlay.setAttribute('class', noteClass);
+      applySpeedGlow(stemOverlay, noteClass);
 
       staffSvg.appendChild(shadow);
       staffSvg.appendChild(stemShadow);
@@ -2633,11 +2828,29 @@
       if (!fxSvg) return;
       const theme = getActiveTheme();
       const point = note ? getNoteVisualPoint(note) : { x: 430, y: 250 };
+      const isCompactViewport = window.innerWidth <= 760;
       const duration = kind === 'level' ? 920 : kind === 'speed' ? 620 : 420;
       const baseRadius = kind === 'level' ? 18 : kind === 'speed' ? 14 : 11;
       const rayCount = kind === 'level' ? 10 : kind === 'speed' ? 8 : 6;
       const strokePrimary = kind === 'level' ? theme.accent2 : theme.accent;
       const strokeSecondary = kind === 'level' ? theme.accent : theme.accent2;
+
+      if (isCompactViewport) {
+        const ring = createSvgEl('circle', {
+          cx: point.x,
+          cy: point.y,
+          r: kind === 'level' ? 14 : 10,
+          fill: 'none',
+          stroke: strokePrimary,
+          'stroke-width': kind === 'level' ? 3 : 2,
+          opacity: '0.82'
+        });
+        ring.appendChild(createSvgEl('animate', { attributeName: 'r', from: kind === 'level' ? '14' : '10', to: kind === 'level' ? '34' : '24', dur: `${duration}ms`, fill: 'freeze' }));
+        ring.appendChild(createSvgEl('animate', { attributeName: 'opacity', from: '0.82', to: '0', dur: `${duration}ms`, fill: 'freeze' }));
+        fxSvg.appendChild(ring);
+        window.setTimeout(() => ring.remove(), duration + 80);
+        return;
+      }
 
       const outer = createSvgEl('g', { transform: `translate(${point.x} ${point.y})` });
       const burst = createSvgEl('g');
@@ -2785,13 +2998,21 @@
 
       const blob = new Blob([pcmBytes], { type: 'audio/wav' });
       const uri = URL.createObjectURL(blob);
+      if (toneWaveUriCache.size >= 24) {
+        const oldestKey = toneWaveUriCache.keys().next().value;
+        if (oldestKey) {
+          const oldestUri = toneWaveUriCache.get(oldestKey);
+          if (oldestUri) URL.revokeObjectURL(oldestUri);
+          toneWaveUriCache.delete(oldestKey);
+        }
+      }
       toneWaveUriCache.set(cacheKey, uri);
       return uri;
     }
 
     function playToneFallback(freq, duration, type, volume) {
       try {
-        const uri = createToneWaveUri(freq, duration, type, volume);
+        const uri = createToneWaveUri(freq, duration, type, volume * DEFAULT_AUDIO_GAIN);
         const audio = new Audio(uri);
         audio.preload = 'auto';
         audio.playsInline = true;
@@ -2811,6 +3032,8 @@
         playToneFallback(freq, duration, type, volume);
         return;
       }
+
+      const adjustedVolume = volume * DEFAULT_AUDIO_GAIN;
 
       const ctx = ensureAudioContext();
       if (!ctx) {
@@ -2836,7 +3059,7 @@
       osc.type = type;
       osc.frequency.setValueAtTime(freq, now);
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(adjustedVolume, now + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -3567,8 +3790,8 @@
         flashAnswerButton(guess, 'bad');
         updateMission('wrong', { note: targetNote, revenge: state.currentFlags.revenge });
         if (state.boss.active) resolveBossFailure();
-        setFeedback(`Nicht ganz. Es war ${targetNote.name}.`, 'bad');
-        showToast('Fast', `${targetNote.name}${targetNote.octave} kommt als Revenge zurueck.`, 'bad');
+        setFeedback('Nicht ganz. Versuch die Revenge-Note direkt danach zu holen.', 'bad');
+        showToast('Fast', 'Die Note kommt als Revenge direkt wieder.', 'bad');
         updateStats();
         saveProgress();
         if (state.lives === 0) {
