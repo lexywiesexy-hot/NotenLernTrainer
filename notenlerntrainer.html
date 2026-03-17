@@ -356,6 +356,21 @@
       height: 18px;
     }
 
+    .toggle-row select {
+      min-width: 92px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .toggle-row select option {
+      color: #eff6ff;
+      background: #14263a;
+    }
+
     .theme-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -987,15 +1002,22 @@
       }
 
       .staff-wrap {
+        height: clamp(390px, 54vh, 500px);
         min-height: clamp(390px, 54vh, 500px);
-        padding: 4px 0 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 0;
       }
 
-      #staffSvg,
+      #staffSvg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
       #fxSvg {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
       }
@@ -1089,6 +1111,7 @@
       }
 
       .staff-wrap {
+        height: clamp(360px, 52vh, 460px);
         min-height: clamp(360px, 52vh, 460px);
       }
 
@@ -1193,6 +1216,21 @@
         </div>
 
         <div class="menu-section">
+          <div class="menu-label">Notenumfang</div>
+          <label class="toggle-row">
+            <span>Zusatz-Hilfslinien</span>
+            <select id="extraLedgerLinesSelect">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="menu-section">
           <div class="menu-label">Themes</div>
           <div class="theme-grid" id="themeGrid"></div>
         </div>
@@ -1249,8 +1287,8 @@
           </div>
         </div>
 
-        <svg id="staffSvg" viewBox="0 0 860 500" aria-label="Notensystem"></svg>
-        <svg id="fxSvg" viewBox="0 0 860 500" aria-hidden="true"></svg>
+        <svg id="staffSvg" viewBox="0 0 860 500" preserveAspectRatio="xMidYMid meet" aria-label="Notensystem"></svg>
+        <svg id="fxSvg" viewBox="0 0 860 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
 
         <div class="game-over-overlay" id="gameOverOverlay" role="button" tabindex="0" aria-label="Neustart">
           <div class="game-over-panel">
@@ -1365,51 +1403,34 @@
       }
     };
 
-    const TREBLE_NOTES = [
-      { name: 'A', octave: 3, staffStep: -2, clef: 'treble' },
-      { name: 'H', octave: 3, staffStep: -1, clef: 'treble' },
-      { name: 'C', octave: 4, staffStep: 0, clef: 'treble' },
-      { name: 'D', octave: 4, staffStep: 1, clef: 'treble' },
-      { name: 'E', octave: 4, staffStep: 2, clef: 'treble' },
-      { name: 'F', octave: 4, staffStep: 3, clef: 'treble' },
-      { name: 'G', octave: 4, staffStep: 4, clef: 'treble' },
-      { name: 'A', octave: 4, staffStep: 5, clef: 'treble' },
-      { name: 'H', octave: 4, staffStep: 6, clef: 'treble' },
-      { name: 'C', octave: 5, staffStep: 7, clef: 'treble' },
-      { name: 'D', octave: 5, staffStep: 8, clef: 'treble' },
-      { name: 'E', octave: 5, staffStep: 9, clef: 'treble' },
-      { name: 'F', octave: 5, staffStep: 10, clef: 'treble' },
-      { name: 'G', octave: 5, staffStep: 11, clef: 'treble' },
-      { name: 'A', octave: 5, staffStep: 12, clef: 'treble' },
-      { name: 'H', octave: 5, staffStep: 13, clef: 'treble' },
-      { name: 'C', octave: 6, staffStep: 14, clef: 'treble' }
-    ];
+    const NOTE_SEQUENCE = ['C', 'D', 'E', 'F', 'G', 'A', 'H'];
 
-    const BASS_NOTES = [
-      { name: 'C', octave: 2, staffStep: -2, clef: 'bass' },
-      { name: 'D', octave: 2, staffStep: -1, clef: 'bass' },
-      { name: 'E', octave: 2, staffStep: 0, clef: 'bass' },
-      { name: 'F', octave: 2, staffStep: 1, clef: 'bass' },
-      { name: 'G', octave: 2, staffStep: 2, clef: 'bass' },
-      { name: 'A', octave: 2, staffStep: 3, clef: 'bass' },
-      { name: 'H', octave: 2, staffStep: 4, clef: 'bass' },
-      { name: 'C', octave: 3, staffStep: 5, clef: 'bass' },
-      { name: 'D', octave: 3, staffStep: 6, clef: 'bass' },
-      { name: 'E', octave: 3, staffStep: 7, clef: 'bass' },
-      { name: 'F', octave: 3, staffStep: 8, clef: 'bass' },
-      { name: 'G', octave: 3, staffStep: 9, clef: 'bass' },
-      { name: 'A', octave: 3, staffStep: 10, clef: 'bass' },
-      { name: 'H', octave: 3, staffStep: 11, clef: 'bass' },
-      { name: 'C', octave: 4, staffStep: 12, clef: 'bass' },
-      { name: 'D', octave: 4, staffStep: 13, clef: 'bass' },
-      { name: 'E', octave: 4, staffStep: 14, clef: 'bass' }
-    ];
+    function buildClefRange(clef, startName, startOctave, minStep, maxStep) {
+      const startIndex = NOTE_SEQUENCE.indexOf(startName);
+      const notes = [];
+      for (let staffStep = minStep; staffStep <= maxStep; staffStep++) {
+        const diatonicIndex = startIndex + staffStep;
+        const wrappedIndex = ((diatonicIndex % NOTE_SEQUENCE.length) + NOTE_SEQUENCE.length) % NOTE_SEQUENCE.length;
+        const octaveShift = Math.floor(diatonicIndex / NOTE_SEQUENCE.length);
+        notes.push({
+          name: NOTE_SEQUENCE[wrappedIndex],
+          octave: startOctave + octaveShift,
+          staffStep,
+          clef
+        });
+      }
+      return notes;
+    }
+
+    const TREBLE_NOTES_ALL = buildClefRange('treble', 'C', 4, -8, 24);
+    const BASS_NOTES_ALL = buildClefRange('bass', 'E', 2, -10, 22);
 
     const modeButtons = [...document.querySelectorAll('#modeButtons button')];
     const difficultyButtons = [...document.querySelectorAll('#difficultyButtons button')];
     const gameModeButtons = [...document.querySelectorAll('#gameModeButtons button')];
     const audioToggle = document.getElementById('audioToggle');
     const noteAudioToggle = document.getElementById('noteAudioToggle');
+    const extraLedgerLinesSelect = document.getElementById('extraLedgerLinesSelect');
     const nextBtn = document.getElementById('nextBtn');
     const toneBtn = document.getElementById('toneBtn');
     const menuToggle = document.getElementById('menuToggle');
@@ -1483,6 +1504,7 @@
       nextRoundTimeout: null,
       roundLocked: false,
       audioPriorityDelayMs: 0,
+      extraLedgerLines: 2,
       lives: 5,
       maxLives: 5,
       gameOver: false,
@@ -1598,9 +1620,16 @@
     }
 
     function choosePool() {
-      if (state.mode === 'treble') return TREBLE_NOTES.slice();
-      if (state.mode === 'bass') return BASS_NOTES.slice();
-      return [...TREBLE_NOTES, ...BASS_NOTES];
+      const extraLines = clampNumber(Number(state.extraLedgerLines) || 0, 0, 5);
+      const trebleMinStep = 2 - (extraLines * 2);
+      const trebleMaxStep = 10 + (extraLines * 2);
+      const bassMinStep = 2 - (extraLines * 2);
+      const bassMaxStep = 10 + (extraLines * 2);
+      const treblePool = TREBLE_NOTES_ALL.filter(note => note.staffStep >= trebleMinStep && note.staffStep <= trebleMaxStep);
+      const bassPool = BASS_NOTES_ALL.filter(note => note.staffStep >= bassMinStep && note.staffStep <= bassMaxStep);
+      if (state.mode === 'treble') return treblePool.slice();
+      if (state.mode === 'bass') return bassPool.slice();
+      return [...treblePool, ...bassPool];
     }
 
     function getAverageMastery() {
@@ -1622,6 +1651,7 @@
         difficulty: state.difficulty,
         audioEnabled: state.audioEnabled,
         noteAudioMode: state.noteAudioMode,
+        extraLedgerLines: state.extraLedgerLines,
         survivalMode: state.survivalMode,
         noteStats: state.noteStats,
         noteMastery: state.noteMastery,
@@ -1645,6 +1675,7 @@
         if (['easy', 'medium', 'hard'].includes(data.difficulty)) state.difficulty = data.difficulty;
         state.audioEnabled = data.audioEnabled !== false;
         state.noteAudioMode = data.noteAudioMode === true;
+        state.extraLedgerLines = Number.isFinite(data.extraLedgerLines) ? clampNumber(Math.round(data.extraLedgerLines), 0, 5) : 2;
         state.survivalMode = data.survivalMode === true;
         state.noteStats = data.noteStats && typeof data.noteStats === 'object' ? data.noteStats : {};
         state.noteMastery = data.noteMastery && typeof data.noteMastery === 'object' ? data.noteMastery : {};
@@ -2079,38 +2110,101 @@
     function getStaffLayout() {
       const isMobile = window.innerWidth <= 760;
       const isTiny = window.innerWidth <= 460;
+      const extraLines = clampNumber(Number(state.extraLedgerLines) || 0, 0, 5);
+
+      if (isMobile) {
+        const base = isTiny
+          ? {
+              isMobile: true,
+              isTiny: true,
+              left: 120,
+              right: 740,
+              lineGap: 64,
+              noteX: 474,
+              ledgerHalfWidth: 68,
+              noteRx: 40,
+              noteRy: 26,
+              stemLen: 164
+            }
+          : {
+              isMobile: true,
+              isTiny: false,
+              left: 105,
+              right: 755,
+              lineGap: 64,
+              noteX: 474,
+              ledgerHalfWidth: 68,
+              noteRx: 40,
+              noteRy: 26,
+              stemLen: 164
+            };
+
+        const totalSteps = 4 + (extraLines * 2);
+        const verticalPadding = 28;
+        const fitHeight = 500 - (verticalPadding * 2);
+        const scale = Math.min(1, fitHeight / (totalSteps * base.lineGap));
+        const lineGap = Math.max(38, Math.round(base.lineGap * scale));
+        const noteScale = 0.58 + scale * 0.42;
+        const noteRx = Math.max(20, Math.round(base.noteRx * noteScale));
+        const noteRy = Math.max(13, Math.round(base.noteRy * noteScale));
+        const stemLen = Math.max(82, Math.round(base.stemLen * noteScale));
+        const clefScale = 0.76 + scale * 0.24;
+        const trebleClefFontSize = Math.max(150, Math.round(248 * clefScale));
+        const bassClefFontSize = Math.max(110, Math.round(184 * clefScale));
+        const clefWidthTreble = Math.max(96, Math.round(192 * clefScale));
+        const clefWidthBass = Math.max(78, Math.round(156 * clefScale));
+        const clefHeightTreble = Math.max(168, Math.round(336 * clefScale));
+        const clefHeightBass = Math.max(124, Math.round(248 * clefScale));
+        const clefYOffsetTreble = Math.round(-12 * clefScale);
+        const clefYOffsetBass = Math.round(-8 * clefScale);
+        const totalHeight = totalSteps * lineGap;
+        const topExtraY = Math.round((500 - totalHeight) / 2);
+        const topY = topExtraY + (extraLines * lineGap);
+
+        return {
+          ...base,
+          topY,
+          lineGap,
+          noteRx,
+          noteRy,
+          stemLen,
+          trebleClefFontSize,
+          bassClefFontSize,
+          clefWidthTreble,
+          clefWidthBass,
+          clefHeightTreble,
+          clefHeightBass,
+          clefYOffsetTreble,
+          clefYOffsetBass
+        };
+      }
+
       return {
-        isMobile,
-        isTiny,
-        left: isTiny ? 258 : isMobile ? 248 : 110,
-        right: isTiny ? 602 : isMobile ? 612 : 790,
-        lineGap: isTiny ? 33 : isMobile ? 35 : 32,
-        topY: isTiny ? 150 : isMobile ? 148 : 158,
-        noteX: isMobile ? 430 : 470,
-        ledgerHalfWidth: isMobile ? 30 : 34,
-        noteRx: isTiny ? 29 : isMobile ? 30 : 20,
-        noteRy: isTiny ? 18 : isMobile ? 18.5 : 13,
-        stemLen: isTiny ? 94 : isMobile ? 98 : 82
+        isMobile: false,
+        isTiny: false,
+        left: 110,
+        right: 790,
+        lineGap: 32,
+        topY: 158,
+        noteX: 470,
+        ledgerHalfWidth: 34,
+        noteRx: 20,
+        noteRy: 13,
+        stemLen: 82,
+        trebleClefFontSize: 150,
+        bassClefFontSize: 110,
+        clefWidthTreble: 96,
+        clefWidthBass: 78,
+        clefHeightTreble: 168,
+        clefHeightBass: 124,
+        clefYOffsetTreble: 0,
+        clefYOffsetBass: 0
       };
     }
 
     function updateStaffViewBox(note, layout = getStaffLayout()) {
-      if (!layout.isMobile || !note) {
-        staffSvg.setAttribute('viewBox', '0 0 860 500');
-        fxSvg.setAttribute('viewBox', '0 0 860 500');
-        return;
-      }
-
-      const noteY = yFromStaffStep(note.staffStep);
-      const ledgerLines = getLedgerLineCount(note.staffStep);
-      const boxWidth = layout.isTiny ? 392 : 420;
-      const boxHeight = Math.min(layout.isTiny ? 416 : 430, (layout.isTiny ? 318 : 334) + ledgerLines * 18);
-      const x = clampNumber(layout.noteX - (boxWidth / 2), 0, 860 - boxWidth);
-      const centerY = clampNumber(noteY, (boxHeight / 2) + 22, 500 - (boxHeight / 2) - 18);
-      const y = clampNumber(centerY - (boxHeight / 2), 18, 500 - boxHeight - 10);
-      const viewBox = `${Math.round(x)} ${Math.round(y)} ${boxWidth} ${boxHeight}`;
-      staffSvg.setAttribute('viewBox', viewBox);
-      fxSvg.setAttribute('viewBox', viewBox);
+      staffSvg.setAttribute('viewBox', '0 0 860 500');
+      fxSvg.setAttribute('viewBox', '0 0 860 500');
     }
 
     function yFromStaffStep(staffStep) {
@@ -2135,9 +2229,15 @@
       const clefX = note.clef === 'treble'
         ? (layout.isMobile ? layout.left + (layout.isTiny ? 42 : 46) : 140)
         : (layout.isMobile ? layout.left + (layout.isTiny ? 46 : 50) : 150);
-      const clefY = note.clef === 'treble' ? layout.topY + 3 * layout.lineGap : layout.topY + 1 * layout.lineGap;
-      const clefWidth = note.clef === 'treble' ? 96 : 78;
-      const clefHeight = note.clef === 'treble' ? 168 : 124;
+      const clefY = note.clef === 'treble'
+        ? layout.topY + 3 * layout.lineGap + layout.clefYOffsetTreble
+        : layout.topY + 1 * layout.lineGap + layout.clefYOffsetBass;
+      const clefWidth = note.clef === 'treble'
+        ? layout.clefWidthTreble
+        : layout.clefWidthBass;
+      const clefHeight = note.clef === 'treble'
+        ? layout.clefHeightTreble
+        : layout.clefHeightBass;
       updateStaffViewBox(note, layout);
       const staffLineColor = mixHexColors(mixHexColors(theme.bg3, theme.accent, 0.22), theme.text, 0.2);
       const ledgerLineColor = mixHexColors(staffLineColor, theme.text, 0.16);
@@ -2188,7 +2288,9 @@
         x: clefX + 3,
         y: clefY + 3,
         fill: 'rgba(0,0,0,0.18)',
-        'font-size': note.clef === 'treble' ? (layout.isTiny ? 118 : layout.isMobile ? 124 : 150) : (layout.isTiny ? 88 : layout.isMobile ? 92 : 110),
+        'font-size': note.clef === 'treble'
+          ? layout.trebleClefFontSize
+          : layout.bassClefFontSize,
         'font-family': 'Georgia, Times New Roman, serif',
         'dominant-baseline': 'middle'
       });
@@ -2200,7 +2302,9 @@
         x: clefX,
         y: clefY,
         fill: 'url(#noteClefGradient)',
-        'font-size': note.clef === 'treble' ? (layout.isTiny ? 118 : layout.isMobile ? 124 : 150) : (layout.isTiny ? 88 : layout.isMobile ? 92 : 110),
+        'font-size': note.clef === 'treble'
+          ? layout.trebleClefFontSize
+          : layout.bassClefFontSize,
         'font-family': 'Georgia, Times New Roman, serif',
         'dominant-baseline': 'middle',
         stroke: 'rgba(255,255,255,0.08)',
@@ -2214,6 +2318,10 @@
       const y = yFromStaffStep(note.staffStep);
       const staffTop = layout.topY;
       const staffBottom = layout.topY + 4 * layout.lineGap;
+      const stemOffset = Math.round(layout.noteRx * 0.85);
+      const shadowOffset = Math.max(2, Math.round(layout.noteRx * 0.1));
+      const bevelOffsetX = Math.round(layout.noteRx * 0.2);
+      const bevelOffsetY = Math.round(layout.noteRy * 0.3);
       const ledgerYs = [];
       if (y < staffTop) for (let ly = staffTop - layout.lineGap; ly >= y; ly -= layout.lineGap) ledgerYs.push(ly);
       if (y > staffBottom) for (let ly = staffBottom + layout.lineGap; ly <= y; ly += layout.lineGap) ledgerYs.push(ly);
@@ -2233,11 +2341,11 @@
       });
 
       const shadow = createSvgEl('ellipse', {
-        cx: layout.noteX + 2,
-        cy: y + 2,
+        cx: layout.noteX + shadowOffset,
+        cy: y + shadowOffset,
         rx: layout.noteRx + 1,
         ry: layout.noteRy + 1,
-        transform: `rotate(-20 ${layout.noteX + 2} ${y + 2})`,
+        transform: `rotate(-20 ${layout.noteX + shadowOffset} ${y + shadowOffset})`,
         fill: 'rgba(0,0,0,0.18)'
       });
       if (noteClass) shadow.setAttribute('class', noteClass);
@@ -2255,18 +2363,18 @@
       if (noteClass) head.setAttribute('class', noteClass);
 
       const bevel = createSvgEl('ellipse', {
-        cx: layout.noteX - 4,
-        cy: y - 4,
-        rx: Math.max(7, layout.noteRx - 8),
-        ry: Math.max(4, layout.noteRy - 8),
-        transform: `rotate(-20 ${layout.noteX - 4} ${y - 4})`,
+        cx: layout.noteX - bevelOffsetX,
+        cy: y - bevelOffsetY,
+        rx: Math.max(7, layout.noteRx - Math.round(layout.noteRx * 0.4)),
+        ry: Math.max(4, layout.noteRy - Math.round(layout.noteRy * 0.45)),
+        transform: `rotate(-20 ${layout.noteX - bevelOffsetX} ${y - bevelOffsetY})`,
         fill: 'url(#noteBevelGradient)',
         opacity: '0.9'
       });
       if (noteClass) bevel.setAttribute('class', noteClass);
 
       const stemUp = y > (layout.topY + layout.lineGap * 2.1);
-      const stemX = stemUp ? layout.noteX + 17 : layout.noteX - 17;
+      const stemX = stemUp ? layout.noteX + stemOffset : layout.noteX - stemOffset;
       const stemY1 = stemUp ? y - 2 : y + 2;
       const stemY2 = stemUp ? y - layout.stemLen : y + layout.stemLen;
       const stemGradient = createSvgEl('linearGradient', {
@@ -2283,26 +2391,26 @@
       defs.appendChild(stemGradient);
 
       const stemShadow = createSvgEl('line', stemUp
-        ? { x1: layout.noteX + 18, y1: y - 1, x2: layout.noteX + 18, y2: y - layout.stemLen + 1 }
-        : { x1: layout.noteX - 16, y1: y + 3, x2: layout.noteX - 16, y2: y + layout.stemLen + 1 });
+        ? { x1: layout.noteX + stemOffset + 1, y1: y - 1, x2: layout.noteX + stemOffset + 1, y2: y - layout.stemLen + 1 }
+        : { x1: layout.noteX - stemOffset + 1, y1: y + 3, x2: layout.noteX - stemOffset + 1, y2: y + layout.stemLen + 1 });
       stemShadow.setAttribute('stroke', 'rgba(0,0,0,0.18)');
-      stemShadow.setAttribute('stroke-width', '3.5');
+      stemShadow.setAttribute('stroke-width', layout.isMobile ? '5.2' : '3.5');
       stemShadow.setAttribute('stroke-linecap', 'round');
       if (noteClass) stemShadow.setAttribute('class', noteClass);
 
       const stem = createSvgEl('line', stemUp
-        ? { x1: layout.noteX + 17, y1: y - 2, x2: layout.noteX + 17, y2: y - layout.stemLen }
-        : { x1: layout.noteX - 17, y1: y + 2, x2: layout.noteX - 17, y2: y + layout.stemLen });
+        ? { x1: layout.noteX + stemOffset, y1: y - 2, x2: layout.noteX + stemOffset, y2: y - layout.stemLen }
+        : { x1: layout.noteX - stemOffset, y1: y + 2, x2: layout.noteX - stemOffset, y2: y + layout.stemLen });
       stem.setAttribute('stroke', 'url(#noteStemGradient)');
-      stem.setAttribute('stroke-width', '3.15');
+      stem.setAttribute('stroke-width', layout.isMobile ? '6' : '3.15');
       stem.setAttribute('stroke-linecap', 'round');
       if (noteClass) stem.setAttribute('class', noteClass);
 
       const stemOverlay = createSvgEl('line', stemUp
-        ? { x1: layout.noteX + 17.35, y1: y - 4, x2: layout.noteX + 17.35, y2: y - layout.stemLen + 4 }
-        : { x1: layout.noteX - 16.65, y1: y + 4, x2: layout.noteX - 16.65, y2: y + layout.stemLen - 4 });
+        ? { x1: layout.noteX + stemOffset + 0.35, y1: y - 4, x2: layout.noteX + stemOffset + 0.35, y2: y - layout.stemLen + 4 }
+        : { x1: layout.noteX - stemOffset + 0.35, y1: y + 4, x2: layout.noteX - stemOffset + 0.35, y2: y + layout.stemLen - 4 });
       stemOverlay.setAttribute('stroke', 'rgba(255,255,255,0.16)');
-      stemOverlay.setAttribute('stroke-width', '0.95');
+      stemOverlay.setAttribute('stroke-width', layout.isMobile ? '1.3' : '0.95');
       stemOverlay.setAttribute('stroke-linecap', 'round');
       if (noteClass) stemOverlay.setAttribute('class', noteClass);
 
@@ -3013,6 +3121,7 @@
       gameModeButtons.forEach(button => button.classList.toggle('active', button.dataset.gameMode === (state.survivalMode ? 'survival' : 'classic')));
       audioToggle.checked = state.audioEnabled;
       noteAudioToggle.checked = state.noteAudioMode;
+      extraLedgerLinesSelect.value = String(state.extraLedgerLines);
     }
 
     function getPromptText() {
@@ -3210,9 +3319,9 @@
       }));
       console.assert(xpNeeded(1) === 8, 'Level 1 should need 8 XP.');
       console.assert(getDifficultyMultiplier() > 0, 'Difficulty multiplier should exist.');
-      console.assert(getNoteKey(TREBLE_NOTES[2]) === 'treble:C:4', 'Treble key should be stable.');
-      console.assert(BASS_NOTES.find(note => note.name === 'C' && note.octave === 4).staffStep === 12, 'Bass mapping should reach C4.');
-      console.assert(TREBLE_NOTES.find(note => note.name === 'C' && note.octave === 6).staffStep === 14, 'Treble mapping should reach C6.');
+      console.assert(getNoteKey(TREBLE_NOTES_ALL.find(note => note.staffStep === 0)) === 'treble:C:4', 'Treble key should be stable.');
+      console.assert(BASS_NOTES_ALL.find(note => note.name === 'C' && note.octave === 4).staffStep === 12, 'Bass mapping should reach C4.');
+      console.assert(TREBLE_NOTES_ALL.find(note => note.name === 'C' && note.octave === 6).staffStep === 14, 'Treble mapping should reach C6.');
       console.assert(getFastBonus(0.8) >= 2, 'Fast answers should grant bonus XP.');
       console.assert(getSpeedTierForStreak(3).name === 'Spark', 'Speed tier 1 should unlock at 3.');
       console.assert(getSpeedTierForStreak(12).name === 'Overdrive', 'Top speed tier should unlock at 12.');
@@ -3275,6 +3384,12 @@
       updateStats();
       saveProgress();
       if (state.noteAudioMode && state.current) playTargetPitch(state.current);
+    });
+
+    extraLedgerLinesSelect.addEventListener('change', () => {
+      state.extraLedgerLines = clampNumber(Number(extraLedgerLinesSelect.value) || 0, 0, 5);
+      drawCurrentState();
+      saveProgress();
     });
 
     toneBtn.addEventListener('click', () => {
