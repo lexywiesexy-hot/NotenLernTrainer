@@ -1620,6 +1620,7 @@
     const isIOS = /iPad|iPhone|iPod/i.test(browserUa)
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const fallbackAudioPlayers = [];
+    const toneWaveUriCache = new Map();
 
     const state = {
       mode: 'treble',
@@ -2740,7 +2741,10 @@
     }
 
     function createToneWaveUri(freq, duration, type = 'sine', volume = 0.12) {
-      const sampleRate = 22050;
+      const cacheKey = `${freq}|${duration}|${type}|${volume}`;
+      if (toneWaveUriCache.has(cacheKey)) return toneWaveUriCache.get(cacheKey);
+
+      const sampleRate = 44100;
       const frameCount = Math.max(1, Math.floor(sampleRate * duration));
       const pcmBytes = new Uint8Array(44 + frameCount * 2);
       const dataView = new DataView(pcmBytes.buffer);
@@ -2770,14 +2774,19 @@
         else if (type === 'square') sample = phase < 0.5 ? 1 : -1;
         else sample = Math.sin(2 * Math.PI * freq * t);
 
-        const envelope = Math.min(1, i / Math.max(1, sampleRate * 0.01))
-          * Math.min(1, (frameCount - i) / Math.max(1, sampleRate * 0.02));
+        const attackFrames = Math.max(1, Math.floor(sampleRate * 0.008));
+        const releaseFrames = Math.max(1, Math.floor(sampleRate * Math.min(0.06, duration * 0.4)));
+        const attack = Math.min(1, i / attackFrames);
+        const release = Math.min(1, (frameCount - i) / releaseFrames);
+        const envelope = Math.max(0, Math.min(1, attack * release * release));
         const value = Math.max(-1, Math.min(1, sample * volume * envelope));
         dataView.setInt16(44 + i * 2, Math.round(value * 32767), true);
       }
 
       const blob = new Blob([pcmBytes], { type: 'audio/wav' });
-      return URL.createObjectURL(blob);
+      const uri = URL.createObjectURL(blob);
+      toneWaveUriCache.set(cacheKey, uri);
+      return uri;
     }
 
     function playToneFallback(freq, duration, type, volume) {
@@ -2788,7 +2797,6 @@
         audio.playsInline = true;
         fallbackAudioPlayers.push(audio);
         const cleanup = () => {
-          URL.revokeObjectURL(uri);
           const index = fallbackAudioPlayers.indexOf(audio);
           if (index >= 0) fallbackAudioPlayers.splice(index, 1);
         };
