@@ -2699,27 +2699,36 @@
 
     function unlockAudio() {
       const ctx = ensureAudioContext();
-      if (!ctx || state.audioUnlocked) return;
+      if (!ctx) return;
 
       try {
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
         const gain = ctx.createGain();
         gain.gain.value = 0.00001;
         gain.connect(ctx.destination);
 
+        const now = ctx.currentTime;
+        const buffer = ctx.createBuffer(1, 1, Math.max(22050, ctx.sampleRate || 44100));
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(gain);
+        source.start(now);
+        source.stop(now + 0.01);
+
         const osc = ctx.createOscillator();
         osc.frequency.value = 440;
         osc.connect(gain);
-
-        const now = ctx.currentTime;
         osc.start(now);
         osc.stop(now + 0.01);
-        state.audioUnlocked = true;
+
+        state.audioUnlocked = ctx.state === 'running';
       } catch (_) {}
     }
 
     function playTone(freq, duration, type, volume) {
       const ctx = ensureAudioContext();
-      if (!ctx) return;
+      if (!ctx || ctx.state !== 'running') return;
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
