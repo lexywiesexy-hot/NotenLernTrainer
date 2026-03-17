@@ -1438,10 +1438,6 @@
         <button class="ghost-btn icon-btn" id="toneBtn" aria-label="Zielton abspielen" title="Zielton abspielen">
           <span id="toneBtnLabel">Ton</span>
         </button>
-        <button class="ghost-btn" id="nextBtn">
-          <span class="icon-label" id="skipBtnLabel">Ueberspringen</span>
-          <span aria-hidden="true">&#8618;</span>
-        </button>
         <button class="burger-btn" id="menuToggle" aria-expanded="false" aria-controls="settingsDrawer">
           <span class="burger-icon"><span></span></span>
           <span class="icon-label" id="settingsBtnLabel">Settings</span>
@@ -1700,13 +1696,13 @@
       feedback: {
         skip: 'Kann man mal machen.',
         wrongRevengeSuffix: 'Und nochmal.',
-        fallbackGood: 'Tuff.'
+        fallbackGood: 'Yes.'
       },
       reactions: {
         revengeLines: [
-          'Und das war nochmal..',
-          'Ah ja genau, der.',
-          'Ah ja genau, die.',
+          'Fast.',
+          'Nope.',
+          'Neeeext.',
           'Uhm..',
           'Ich glaub an dich.'
         ],
@@ -2083,7 +2079,6 @@
       setText('appTitleText', WORDING.ui.appTitle);
       setText('appSubtitleText', WORDING.ui.subtitle);
       setText('toneBtnLabel', WORDING.ui.toneButton);
-      setText('skipBtnLabel', WORDING.ui.skipButton);
       setText('settingsBtnLabel', WORDING.ui.settingsButton);
       setText('menuTitleText', WORDING.ui.menuTitle);
       setText('menuClose', WORDING.ui.menuClose);
@@ -2137,7 +2132,6 @@
     const accidentalsToggle = document.getElementById('accidentalsToggle');
     const keySignatureToggle = document.getElementById('keySignatureToggle');
     const keySignatureSelect = document.getElementById('keySignatureSelect');
-    const nextBtn = document.getElementById('nextBtn');
     const toneBtn = document.getElementById('toneBtn');
     const menuToggle = document.getElementById('menuToggle');
     const menuClose = document.getElementById('menuClose');
@@ -3825,10 +3819,17 @@
       });
     }
 
-    function playErrorSound() {
+    function playErrorSound(startDelayMs = 0) {
       if (!state.audioEnabled) return;
-      playTone(220, 0.1, 'sine', 0.024);
-      setTimeout(() => playTone(196, 0.12, 'sine', 0.02), 60);
+      const token = claimAudioPriority(2, startDelayMs + 260);
+      scheduleAudio(startDelayMs, () => {
+        playTone(246.94, 0.11, 'triangle', 0.024);
+        playTone(196, 0.16, 'sine', 0.02);
+        setTimeout(() => {
+          if (!canPlayAudioPriority(2, token)) return;
+          playTone(174.61, 0.18, 'triangle', 0.022);
+        }, 78);
+      }, 2, token);
     }
 
     function scheduleAudio(delayMs, callback) {
@@ -4483,6 +4484,7 @@
       state.levelSkips += 1;
       updateMission('skip', { note: state.current, revenge: state.currentFlags.revenge });
       if (state.boss.active) resolveBossFailure();
+      playErrorSound();
       setFeedback(WORDING.feedback.skip, 'bad');
       showToast(WORDING.toasts.skipTitle, WORDING.toasts.skipSubtitle, 'bad');
       vibrate(18);
@@ -4778,7 +4780,6 @@
     menuToggle.addEventListener('click', openMenu);
     menuClose.addEventListener('click', closeMenu);
     settingsOverlay.addEventListener('click', closeMenu);
-    nextBtn.addEventListener('click', skipCurrentRound);
 
     window.addEventListener('keydown', event => {
       unlockAudio();
@@ -4801,7 +4802,6 @@
 
     window.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeMenu();
-      if (event.key.toLowerCase() === 'n') skipCurrentRound();
       if (event.key.toLowerCase() === 'p' && state.noteAudioMode && state.current) playTargetPitch(state.current);
     });
 
