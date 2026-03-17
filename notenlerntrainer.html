@@ -1980,6 +1980,8 @@
     const masteryGrid = document.getElementById('masteryGrid');
     const masterySummary = document.getElementById('masterySummary');
     const themeName = document.getElementById('themeName');
+    const appTitle = document.querySelector('.title');
+    const mainCard = document.querySelector('.card');
     const modePill = document.getElementById('modePill');
 
     let lastWindowWidth = window.innerWidth;
@@ -2492,46 +2494,54 @@
       document.documentElement.style.setProperty('--app-height-88', `${Math.round(height * 0.88)}px`);
     }
 
+    function applyThemeToElement(targetStyle, theme) {
+      if (!targetStyle || !theme) return;
+      targetStyle.setProperty('--bg1', theme.bg1);
+      targetStyle.setProperty('--bg2', theme.bg2);
+      targetStyle.setProperty('--bg3', theme.bg3);
+      targetStyle.setProperty('--panel', theme.panel);
+      targetStyle.setProperty('--panel-strong', theme.panelStrong);
+      targetStyle.setProperty('--border', theme.border);
+      targetStyle.setProperty('--text', theme.text);
+      targetStyle.setProperty('--muted', theme.muted);
+      targetStyle.setProperty('--accent', theme.accent);
+      targetStyle.setProperty('--accent-2', theme.accent2);
+      targetStyle.setProperty('--good', theme.good);
+      targetStyle.setProperty('--bad', theme.bad);
+      targetStyle.setProperty('--accent-rgb', hexToRgbString(theme.accent));
+      targetStyle.setProperty('--accent-2-rgb', hexToRgbString(theme.accent2));
+      targetStyle.setProperty('--good-rgb', hexToRgbString(theme.good));
+      targetStyle.setProperty('--bad-rgb', hexToRgbString(theme.bad));
+    }
+
     function applyTheme() {
       const themeId = getLevelThemeId(state.level);
       state.selectedTheme = themeId;
-      const theme = getProceduralTheme(themeId, state.level);
-      const appliedTheme = state.boss.active
-        ? {
-            ...theme,
-            bg1: invertHexColor(theme.bg1),
-            bg2: invertHexColor(theme.bg2),
-            bg3: invertHexColor(theme.bg3),
-            panel: invertRgbaColor(theme.panel),
-            panelStrong: invertRgbaColor(theme.panelStrong),
-            border: invertRgbaColor(theme.border),
-            text: invertHexColor(theme.text),
-            muted: invertHexColor(theme.muted),
-            accent: invertHexColor(theme.accent),
-            accent2: invertHexColor(theme.accent2),
-            good: invertHexColor(theme.good),
-            bad: invertHexColor(theme.bad)
-          }
-        : theme;
-      state.activeTheme = appliedTheme;
+      const baseTheme = getProceduralTheme(themeId, state.level);
+      const bossTheme = {
+        ...baseTheme,
+        bg1: invertHexColor(baseTheme.bg1),
+        bg2: invertHexColor(baseTheme.bg2),
+        bg3: invertHexColor(baseTheme.bg3),
+        panel: invertRgbaColor(baseTheme.panel),
+        panelStrong: invertRgbaColor(baseTheme.panelStrong),
+        border: invertRgbaColor(baseTheme.border),
+        text: invertHexColor(baseTheme.text),
+        muted: invertHexColor(baseTheme.muted),
+        accent: invertHexColor(baseTheme.accent),
+        accent2: invertHexColor(baseTheme.accent2),
+        good: invertHexColor(baseTheme.good),
+        bad: invertHexColor(baseTheme.bad)
+      };
+      state.activeTheme = state.boss.active ? bossTheme : baseTheme;
       const root = document.documentElement.style;
-      root.setProperty('--bg1', appliedTheme.bg1);
-      root.setProperty('--bg2', appliedTheme.bg2);
-      root.setProperty('--bg3', appliedTheme.bg3);
-      root.setProperty('--panel', appliedTheme.panel);
-      root.setProperty('--panel-strong', appliedTheme.panelStrong);
-      root.setProperty('--border', appliedTheme.border);
-      root.setProperty('--text', appliedTheme.text);
-      root.setProperty('--muted', appliedTheme.muted);
-      root.setProperty('--accent', appliedTheme.accent);
-      root.setProperty('--accent-2', appliedTheme.accent2);
-      root.setProperty('--good', appliedTheme.good);
-      root.setProperty('--bad', appliedTheme.bad);
-      root.setProperty('--accent-rgb', hexToRgbString(appliedTheme.accent));
-      root.setProperty('--accent-2-rgb', hexToRgbString(appliedTheme.accent2));
-      root.setProperty('--good-rgb', hexToRgbString(appliedTheme.good));
-      root.setProperty('--bad-rgb', hexToRgbString(appliedTheme.bad));
-      if (themeName) themeName.textContent = `${theme.name}${state.boss.active ? ' · Boss' : ''} · Level ${state.level}`;
+      applyThemeToElement(root, baseTheme);
+      if (mainCard) {
+        if (state.boss.active) applyThemeToElement(mainCard.style, bossTheme);
+        else mainCard.removeAttribute('style');
+      }
+      if (themeName) themeName.textContent = `${baseTheme.name}${state.boss.active ? ' · Boss' : ''} · Level ${state.level}`;
+      if (appTitle) appTitle.textContent = state.boss.active ? 'Endgegnerrr 💀' : 'Lexy\'s Notenspaß';
     }
 
     function showToast(title, subtitle = '', variant = 'good') {
